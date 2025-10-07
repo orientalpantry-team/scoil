@@ -37,6 +37,7 @@ interface SectionStyles {
   about?: SectionStyle;
   contact?: SectionStyle;
   header?: SectionStyle & { height?: string };
+  footer?: SectionStyle;
 }
 
 const ThemeManagement = () => {
@@ -425,6 +426,11 @@ const ThemeManagement = () => {
               title="Contact Section"
               value={sectionStyles.contact || {}}
               onChange={(val) => setSectionStyles({ ...sectionStyles, contact: val })}
+            />
+            <SectionStyleEditor
+              title="Footer Section"
+              value={sectionStyles.footer || {}}
+              onChange={(val) => setSectionStyles({ ...sectionStyles, footer: val })}
             />
           </div>
         </TabsContent>

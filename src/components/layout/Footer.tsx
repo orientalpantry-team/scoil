@@ -2,8 +2,10 @@ import { Link } from "react-router-dom";
 import { GraduationCap, Mail, Phone, MapPin } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const Footer = () => {
+  const { theme } = useTheme();
   const [logo, setLogo] = useState<{ image: string; hoverText: string; title: string } | null>(null);
 
   useEffect(() => {
@@ -23,7 +25,17 @@ const Footer = () => {
   }, []);
 
   return (
-    <footer className="bg-primary text-primary-foreground mt-auto">
+    <footer 
+      className="bg-primary text-primary-foreground mt-auto bg-cover bg-center"
+      style={{
+        backgroundImage: theme?.section_styles?.footer?.backgroundImage 
+          ? `linear-gradient(rgba(0, 0, 0, ${theme.section_styles.footer.overlayOpacity || 0.5}), rgba(0, 0, 0, ${theme.section_styles.footer.overlayOpacity || 0.5})), url(${theme.section_styles.footer.backgroundImage})`
+          : undefined,
+        borderImage: theme?.section_styles?.footer?.borderImage 
+          ? `url(${theme.section_styles.footer.borderImage}) ${theme.section_styles.footer.borderImageSlice || '30'} / ${theme.section_styles.footer.borderImageWidth || '30px'} round`
+          : undefined
+      }}
+    >
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* About Section */}

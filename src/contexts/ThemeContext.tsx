@@ -26,6 +26,7 @@ interface SectionStyles {
   about?: SectionStyle;
   contact?: SectionStyle;
   header?: SectionStyle & { height?: string };
+  footer?: SectionStyle;
 }
 
 interface Theme {
