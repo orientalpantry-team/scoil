@@ -247,76 +247,75 @@ const ThemeManagement = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-12 gap-6">
-        {/* Theme List Sidebar */}
-        <div className="col-span-3">
-          <Card>
-            <CardHeader>
-              <CardTitle>Themes</CardTitle>
-              <CardDescription>Select a theme to edit</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {allThemes?.map((theme) => (
-                <div
-                  key={theme.id}
-                  className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                    selectedTheme?.id === theme.id
-                      ? "border-primary bg-primary/5"
-                      : "border-border hover:border-primary/50"
-                  }`}
-                  onClick={() => {
-                    setSelectedThemeId(theme.id);
-                    setColors(theme.colors as ThemeColors);
-                    setSectionStyles(theme.section_styles as SectionStyles);
-                    setThemeName(theme.name);
-                  }}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-medium">{theme.name}</span>
-                    {theme.is_active && (
-                      <span className="text-xs bg-green-500 text-white px-2 py-1 rounded">
-                        Active
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex gap-2">
-                    {!theme.is_active && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          activateThemeMutation.mutate(theme.id);
-                        }}
-                        disabled={activateThemeMutation.isPending}
-                      >
-                        Activate
-                      </Button>
-                    )}
-                    {!theme.is_active && (
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (confirm(`Delete "${theme.name}"?`)) {
-                            deleteThemeMutation.mutate(theme.id);
-                          }
-                        }}
-                        disabled={deleteThemeMutation.isPending}
-                      >
-                        Delete
-                      </Button>
-                    )}
-                  </div>
+      {/* Theme List */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Themes</CardTitle>
+          <CardDescription>Select a theme to edit</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+            {allThemes?.map((theme) => (
+              <div
+                key={theme.id}
+                className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                  selectedTheme?.id === theme.id
+                    ? "border-primary bg-primary/5"
+                    : "border-border hover:border-primary/50"
+                }`}
+                onClick={() => {
+                  setSelectedThemeId(theme.id);
+                  setColors(theme.colors as ThemeColors);
+                  setSectionStyles(theme.section_styles as SectionStyles);
+                  setThemeName(theme.name);
+                }}
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <span className="font-medium">{theme.name}</span>
+                  {theme.is_active && (
+                    <span className="text-xs bg-green-500 text-white px-2 py-1 rounded">
+                      Active
+                    </span>
+                  )}
                 </div>
-              ))}
-            </CardContent>
-          </Card>
-        </div>
+                <div className="flex gap-2">
+                  {!theme.is_active && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        activateThemeMutation.mutate(theme.id);
+                      }}
+                      disabled={activateThemeMutation.isPending}
+                    >
+                      Activate
+                    </Button>
+                  )}
+                  {!theme.is_active && (
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (confirm(`Delete "${theme.name}"?`)) {
+                          deleteThemeMutation.mutate(theme.id);
+                        }
+                      }}
+                      disabled={deleteThemeMutation.isPending}
+                    >
+                      Delete
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
-        {/* Theme Editor */}
-        <div className="col-span-9">
+      {/* Theme Configuration */}
       <div className="mb-6">
         <Label>Theme Name</Label>
         <Input
@@ -478,8 +477,6 @@ const ThemeManagement = () => {
           </Card>
         </TabsContent>
       </Tabs>
-        </div>
-      </div>
 
       {/* New Theme Dialog */}
       <Dialog open={showNewThemeDialog} onOpenChange={setShowNewThemeDialog}>
