@@ -1,11 +1,29 @@
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { GraduationCap, Menu, X } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [logo, setLogo] = useState<{ image: string; hoverText: string } | null>(null);
   const location = useLocation();
+
+  useEffect(() => {
+    const fetchLogo = async () => {
+      const { data } = await supabase
+        .from("sections")
+        .select("content")
+        .eq("key", "home.logos")
+        .single();
+      
+      if (data?.content && typeof data.content === 'object' && 'image' in data.content) {
+        setLogo(data.content as { image: string; hoverText: string });
+      }
+    };
+
+    fetchLogo();
+  }, []);
 
   const navLinks = [
     { to: "/", label: "Home" },
@@ -23,7 +41,16 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 font-bold text-xl text-primary">
-            <GraduationCap className="h-8 w-8" />
+            {logo?.image ? (
+              <img 
+                src={logo.image} 
+                alt={logo.hoverText} 
+                className="h-8 w-auto object-contain"
+                title={logo.hoverText}
+              />
+            ) : (
+              <GraduationCap className="h-8 w-8" />
+            )}
             <span>Our School</span>
           </Link>
 
