@@ -1,9 +1,15 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { FolderOpen } from "lucide-react";
 
 const Gallery = () => {
+  const [selectedFolder, setSelectedFolder] = useState<string>("all");
+
   const { data: images, isLoading } = useQuery({
     queryKey: ["gallery"],
     queryFn: async () => {
@@ -15,6 +21,12 @@ const Gallery = () => {
     },
   });
 
+  const folders = ["all", ...Array.from(new Set(images?.map((img) => img.folder || "general") || []))];
+  
+  const filteredImages = selectedFolder === "all" 
+    ? images 
+    : images?.filter((img) => img.folder === selectedFolder);
+
   return (
     <div className="min-h-screen py-16">
       <div className="container mx-auto px-4">
@@ -25,15 +37,37 @@ const Gallery = () => {
           Moments captured from our school activities and events
         </p>
 
+        {/* Folder filter */}
+        {!isLoading && images && images.length > 0 && (
+          <div className="flex gap-2 mb-8 flex-wrap justify-center">
+            {folders.map((folder) => (
+              <Button
+                key={folder}
+                variant={selectedFolder === folder ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedFolder(folder)}
+              >
+                <FolderOpen className="mr-2 h-4 w-4" />
+                {folder}
+                {folder !== "all" && (
+                  <Badge variant="secondary" className="ml-2">
+                    {images.filter((img) => img.folder === folder).length}
+                  </Badge>
+                )}
+              </Button>
+            ))}
+          </div>
+        )}
+
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[...Array(6)].map((_, i) => (
               <Skeleton key={i} className="h-64 w-full" />
             ))}
           </div>
-        ) : images && images.length > 0 ? (
+        ) : filteredImages && filteredImages.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {images.map((image) => (
+            {filteredImages.map((image) => (
               <Card key={image.id} className="overflow-hidden group cursor-pointer hover:shadow-lg transition-shadow">
                 <CardContent className="p-0">
                   <div className="aspect-video relative overflow-hidden">
@@ -43,18 +77,26 @@ const Gallery = () => {
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                     />
                   </div>
-                  {image.title && (
-                    <div className="p-4">
-                      <h3 className="font-semibold">{image.title}</h3>
+                  <div className="p-4">
+                    <div className="flex items-center justify-between">
+                      {image.title && <h3 className="font-semibold">{image.title}</h3>}
+                      <Badge variant="secondary" className="text-xs">
+                        {image.folder || "general"}
+                      </Badge>
                     </div>
-                  )}
+                  </div>
                 </CardContent>
               </Card>
             ))}
           </div>
         ) : (
           <div className="text-center py-12">
-            <p className="text-muted-foreground text-lg">No images in gallery yet.</p>
+            <p className="text-muted-foreground text-lg">
+              {selectedFolder === "all" 
+                ? "No images in gallery yet."
+                : `No images in "${selectedFolder}" folder.`
+              }
+            </p>
           </div>
         )}
       </div>
