@@ -4,7 +4,7 @@ import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Trash2, Plus } from "lucide-react";
+import React from "react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -15,11 +15,7 @@ const logoSchema = z.object({
   hoverText: z.string().min(1, "Hover text is required").max(100, "Hover text must be less than 100 characters"),
 });
 
-const logosSchema = z.object({
-  logos: z.array(logoSchema).min(1, "At least one logo is required"),
-});
-
-type LogosFormData = z.infer<typeof logosSchema>;
+type LogoFormData = z.infer<typeof logoSchema>;
 
 interface LogoSectionFormProps {
   content: any;
@@ -29,7 +25,8 @@ interface LogoSectionFormProps {
 
 export const LogoSectionForm = ({ content, onSave, isSaving }: LogoSectionFormProps) => {
   const { toast } = useToast();
-  const [selectingImageFor, setSelectingImageFor] = useState<number | null>(null);
+  const [selectingImage, setSelectingImage] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   const {
     register,
@@ -37,105 +34,122 @@ export const LogoSectionForm = ({ content, onSave, isSaving }: LogoSectionFormPr
     formState: { errors },
     watch,
     setValue,
-  } = useForm<LogosFormData>({
-    resolver: zodResolver(logosSchema),
+  } = useForm<LogoFormData>({
+    resolver: zodResolver(logoSchema),
     defaultValues: content,
   });
 
-  const logos = watch("logos") || [];
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-  const addLogo = () => {
-    setValue("logos", [...logos, { image: "", hoverText: "" }]);
-  };
+    setIsUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const filePath = `${Math.random()}.${fileExt}`;
 
-  const removeLogo = (index: number) => {
-    setValue(
-      "logos",
-      logos.filter((_, i) => i !== index)
-    );
-  };
+      const { error: uploadError, data } = await supabase.storage
+        .from('gallery')
+        .upload(filePath, file);
 
-  const handleImageSelect = (imageUrl: string) => {
-    if (selectingImageFor !== null) {
-      setValue(`logos.${selectingImageFor}.image`, imageUrl);
-      setSelectingImageFor(null);
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('gallery')
+        .getPublicUrl(filePath);
+
+      setValue('image', publicUrl);
+      toast({
+        title: "Success",
+        description: "Image uploaded successfully",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
     }
   };
 
+  const handleImageSelect = (imageUrl: string) => {
+    setValue('image', imageUrl);
+    setSelectingImage(false);
+  };
+
+  const logo = watch();
+
   return (
     <form onSubmit={handleSubmit(onSave)} className="space-y-6">
-      <div className="space-y-4">
-        {logos.map((logo, index) => (
-          <div key={index} className="p-4 border rounded-lg space-y-4 bg-muted/50">
-            <div className="flex justify-between items-center">
-              <h4 className="font-semibold">Logo {index + 1}</h4>
-              {logos.length > 1 && (
-                <Button
-                  type="button"
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => removeLogo(index)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              )}
-            </div>
+      <div className="p-4 border rounded-lg space-y-4 bg-muted/50">
+        <h4 className="font-semibold">School Logo</h4>
 
-            <div className="space-y-2">
-              <Label>Logo Image</Label>
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setSelectingImageFor(index)}
-                  className="flex-1"
-                >
-                  Select from Gallery
-                </Button>
-              </div>
-              {logo.image && (
-                <img
-                  src={logo.image}
-                  alt="Preview"
-                  className="w-32 h-32 object-contain rounded-md border bg-white"
-                />
-              )}
-              {errors.logos?.[index]?.image && (
-                <p className="text-sm text-destructive">
-                  {errors.logos[index]?.image?.message}
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor={`logos.${index}.hoverText`}>Hover Text</Label>
-              <Input
-                {...register(`logos.${index}.hoverText`)}
-                placeholder="Text to show on hover"
-              />
-              {errors.logos?.[index]?.hoverText && (
-                <p className="text-sm text-destructive">
-                  {errors.logos[index]?.hoverText?.message}
-                </p>
-              )}
-            </div>
+        <div className="space-y-2">
+          <Label>Logo Image</Label>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setSelectingImage(true)}
+              className="flex-1"
+            >
+              Select from Gallery
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isUploading}
+              onClick={() => document.getElementById('logo-upload')?.click()}
+              className="flex-1"
+            >
+              {isUploading ? "Uploading..." : "Upload Image"}
+            </Button>
+            <input
+              id="logo-upload"
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="hidden"
+            />
           </div>
-        ))}
-      </div>
+          {logo.image && (
+            <img
+              src={logo.image}
+              alt="Preview"
+              className="w-32 h-32 object-contain rounded-md border bg-white"
+            />
+          )}
+          {errors.image && (
+            <p className="text-sm text-destructive">
+              {errors.image.message}
+            </p>
+          )}
+        </div>
 
-      <Button type="button" variant="outline" onClick={addLogo} className="w-full">
-        <Plus className="h-4 w-4 mr-2" />
-        Add Logo
-      </Button>
+        <div className="space-y-2">
+          <Label htmlFor="hoverText">Hover Text</Label>
+          <Input
+            {...register('hoverText')}
+            placeholder="Text to show on hover"
+          />
+          {errors.hoverText && (
+            <p className="text-sm text-destructive">
+              {errors.hoverText.message}
+            </p>
+          )}
+        </div>
+      </div>
 
       <Button type="submit" disabled={isSaving} className="w-full">
         {isSaving ? "Saving..." : "Save Changes"}
       </Button>
 
-      {selectingImageFor !== null && (
+      {selectingImage && (
         <ImageSelector
           onSelect={handleImageSelect}
-          onClose={() => setSelectingImageFor(null)}
+          onClose={() => setSelectingImage(false)}
         />
       )}
     </form>
