@@ -14,8 +14,10 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const Home = () => {
+  const { theme } = useTheme();
   const { data: heroData } = useQuery({
     queryKey: ["section", "home.hero"],
     queryFn: async () => {
@@ -105,9 +107,11 @@ const Home = () => {
               <section 
                 className="relative py-20 md:py-32 bg-cover bg-center bg-no-repeat min-h-[500px] flex items-center"
                 style={{
-                  backgroundImage: slide.image 
-                    ? `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(${slide.image})`
-                    : 'linear-gradient(to bottom right, hsl(var(--primary)), hsl(var(--accent)))'
+                  backgroundImage: theme?.section_styles?.hero?.backgroundImage 
+                    ? `linear-gradient(rgba(0, 0, 0, ${theme.section_styles.hero.overlayOpacity || 0.5}), rgba(0, 0, 0, ${theme.section_styles.hero.overlayOpacity || 0.5})), url(${theme.section_styles.hero.backgroundImage})`
+                    : slide.image 
+                      ? `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(${slide.image})`
+                      : 'linear-gradient(to bottom right, hsl(var(--primary)), hsl(var(--accent)))'
                 }}
               >
                 <div className="container mx-auto px-4 text-center">
@@ -127,7 +131,14 @@ const Home = () => {
       </Carousel>
 
       {/* Features Section */}
-      <section className="py-16 bg-muted/30">
+      <section 
+        className="py-16 bg-muted/30 bg-cover bg-center"
+        style={{
+          backgroundImage: theme?.section_styles?.features?.backgroundImage 
+            ? `linear-gradient(rgba(255, 255, 255, ${1 - (theme.section_styles.features.overlayOpacity || 0)}), rgba(255, 255, 255, ${1 - (theme.section_styles.features.overlayOpacity || 0)})), url(${theme.section_styles.features.backgroundImage})`
+            : undefined
+        }}
+      >
         <div className="container mx-auto px-4">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
             {featuresData?.title || "Why Choose Our School"}
@@ -169,7 +180,14 @@ const Home = () => {
       </section>
 
       {/* Testimonials Section */}
-      <section className="py-16">
+      <section 
+        className="py-16 bg-cover bg-center"
+        style={{
+          backgroundImage: theme?.section_styles?.testimonials?.backgroundImage 
+            ? `linear-gradient(rgba(255, 255, 255, ${1 - (theme.section_styles.testimonials.overlayOpacity || 0)}), rgba(255, 255, 255, ${1 - (theme.section_styles.testimonials.overlayOpacity || 0)})), url(${theme.section_styles.testimonials.backgroundImage})`
+            : undefined
+        }}
+      >
         <div className="container mx-auto px-4">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
             What Parents Say
@@ -193,7 +211,14 @@ const Home = () => {
       </section>
 
       {/* About Section */}
-      <section className="py-16 bg-muted/30">
+      <section 
+        className="py-16 bg-muted/30 bg-cover bg-center"
+        style={{
+          backgroundImage: theme?.section_styles?.about?.backgroundImage 
+            ? `linear-gradient(rgba(255, 255, 255, ${1 - (theme.section_styles.about.overlayOpacity || 0)}), rgba(255, 255, 255, ${1 - (theme.section_styles.about.overlayOpacity || 0)})), url(${theme.section_styles.about.backgroundImage})`
+            : undefined
+        }}
+      >
         <div className="container mx-auto px-4">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
             {aboutData?.title || "About Us"}
@@ -218,7 +243,14 @@ const Home = () => {
       </section>
 
       {/* Contact Section */}
-      <section className="py-16">
+      <section 
+        className="py-16 bg-cover bg-center"
+        style={{
+          backgroundImage: theme?.section_styles?.contact?.backgroundImage 
+            ? `linear-gradient(rgba(255, 255, 255, ${1 - (theme.section_styles.contact.overlayOpacity || 0)}), rgba(255, 255, 255, ${1 - (theme.section_styles.contact.overlayOpacity || 0)})), url(${theme.section_styles.contact.backgroundImage})`
+            : undefined
+        }}
+      >
         <div className="container mx-auto px-4">
           <div className="max-w-xl mx-auto">
             <h2 className="text-3xl md:text-4xl font-bold text-center mb-8">
