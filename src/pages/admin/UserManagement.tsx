@@ -85,30 +85,18 @@ const UserManagement = () => {
   // Create new user mutation
   const createUserMutation = useMutation({
     mutationFn: async (userData: typeof newUser) => {
-      // Create user in auth
-      const { data, error } = await supabase.auth.admin.createUser({
-        email: userData.email,
-        password: userData.password,
-        email_confirm: true,
-        user_metadata: {
-          full_name: userData.fullName,
+      // Call edge function to create user
+      const { data, error } = await supabase.functions.invoke("create-user", {
+        body: {
+          email: userData.email,
+          password: userData.password,
+          fullName: userData.fullName,
+          role: userData.role,
         },
       });
 
       if (error) throw error;
-
-      // The profile is created automatically by trigger
-      // Now add the role
-      if (userData.role) {
-        const { error: roleError } = await supabase.from("user_roles").insert([
-          {
-            user_id: data.user.id,
-            role: userData.role as "admin" | "editor" | "user",
-          },
-        ]);
-
-        if (roleError) throw roleError;
-      }
+      if (data.error) throw new Error(data.error);
 
       return data;
     },
@@ -165,8 +153,11 @@ const UserManagement = () => {
   // Delete user mutation
   const deleteUserMutation = useMutation({
     mutationFn: async (userId: string) => {
-      const { error } = await supabase.auth.admin.deleteUser(userId);
+      const { data, error } = await supabase.functions.invoke("delete-user", {
+        body: { userId },
+      });
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
@@ -233,6 +224,9 @@ const UserManagement = () => {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Create New User</DialogTitle>
+              <p className="text-sm text-muted-foreground">
+                Add a new user account and assign their role.
+              </p>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
