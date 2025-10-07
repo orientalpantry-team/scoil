@@ -13,6 +13,7 @@ import {
   LogOut,
   Home,
   Mail,
+  Users,
 } from "lucide-react";
 
 interface AdminLayoutProps {
@@ -50,6 +51,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
     { path: "/admin/policies", label: "Policies", icon: FileCheck },
     { path: "/admin/testimonials", label: "Testimonials", icon: MessageSquare },
     { path: "/admin/contact", label: "Contact Messages", icon: Mail },
+    { path: "/admin/users", label: "User Management", icon: Users },
   ];
 
   return (

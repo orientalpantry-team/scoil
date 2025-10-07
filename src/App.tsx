@@ -23,6 +23,7 @@ import GalleryManagement from "./pages/admin/GalleryManagement";
 import PoliciesManagement from "./pages/admin/PoliciesManagement";
 import TestimonialsManagement from "./pages/admin/TestimonialsManagement";
 import ContactMessages from "./pages/admin/ContactMessages";
+import UserManagement from "./pages/admin/UserManagement";
 
 const queryClient = new QueryClient();
 
@@ -72,6 +73,7 @@ const App = () => (
                     <Route path="/policies" element={<PoliciesManagement />} />
                     <Route path="/testimonials" element={<TestimonialsManagement />} />
                     <Route path="/contact" element={<ContactMessages />} />
+                    <Route path="/users" element={<UserManagement />} />
                   </Routes>
                 </AdminLayout>
               </ProtectedRoute>
