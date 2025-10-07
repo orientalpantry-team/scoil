@@ -19,6 +19,12 @@ const Auth = () => {
   const errorParam = searchParams.get("error");
 
   useEffect(() => {
+    // Don't auto-redirect if there's an access denied error
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get("error") === "access_denied") {
+      return;
+    }
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         navigate("/admin");
