@@ -1,7 +1,27 @@
 import { Link } from "react-router-dom";
 import { GraduationCap, Mail, Phone, MapPin } from "lucide-react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const Footer = () => {
+  const [logo, setLogo] = useState<{ image: string; hoverText: string; title: string } | null>(null);
+
+  useEffect(() => {
+    const fetchLogo = async () => {
+      const { data } = await supabase
+        .from("sections")
+        .select("content")
+        .eq("key", "home.logos")
+        .single();
+      
+      if (data?.content && typeof data.content === 'object' && 'image' in data.content) {
+        setLogo(data.content as { image: string; hoverText: string; title: string });
+      }
+    };
+
+    fetchLogo();
+  }, []);
+
   return (
     <footer className="bg-primary text-primary-foreground mt-auto">
       <div className="container mx-auto px-4 py-12">
@@ -9,8 +29,17 @@ const Footer = () => {
           {/* About Section */}
           <div>
             <div className="flex items-center gap-2 mb-4">
-              <GraduationCap className="h-8 w-8" />
-              <span className="font-bold text-xl">Our School</span>
+              {logo?.image ? (
+                <img 
+                  src={logo.image} 
+                  alt={logo.hoverText} 
+                  className="h-8 w-auto object-contain"
+                  title={logo.hoverText}
+                />
+              ) : (
+                <GraduationCap className="h-8 w-8" />
+              )}
+              <span className="font-bold text-xl">{logo?.title || "Our School"}</span>
             </div>
             <p className="text-primary-foreground/80">
               Building future leaders through quality education and values.
@@ -65,7 +94,7 @@ const Footer = () => {
         </div>
 
         <div className="border-t border-primary-foreground/20 mt-8 pt-8 text-center text-primary-foreground/60">
-          <p>&copy; {new Date().getFullYear()} Our School. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} {logo?.title || "Our School"}. All rights reserved.</p>
         </div>
       </div>
     </footer>
