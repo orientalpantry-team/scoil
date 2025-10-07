@@ -13,6 +13,7 @@ import { ImageSelector } from "../ImageSelector";
 const logoSchema = z.object({
   image: z.string().url("Must be a valid URL"),
   hoverText: z.string().min(1, "Hover text is required").max(100, "Hover text must be less than 100 characters"),
+  title: z.string().min(1, "Title is required").max(50, "Title must be less than 50 characters"),
 });
 
 type LogoFormData = z.infer<typeof logoSchema>;
@@ -124,6 +125,19 @@ export const LogoSectionForm = ({ content, onSave, isSaving }: LogoSectionFormPr
           {errors.image && (
             <p className="text-sm text-destructive">
               {errors.image.message}
+            </p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="title">School Name</Label>
+          <Input
+            {...register('title')}
+            placeholder="School name to display beside logo"
+          />
+          {errors.title && (
+            <p className="text-sm text-destructive">
+              {errors.title.message}
             </p>
           )}
         </div>

@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [logo, setLogo] = useState<{ image: string; hoverText: string } | null>(null);
+  const [logo, setLogo] = useState<{ image: string; hoverText: string; title: string } | null>(null);
   const location = useLocation();
 
   useEffect(() => {
@@ -18,7 +18,7 @@ const Navbar = () => {
         .single();
       
       if (data?.content && typeof data.content === 'object' && 'image' in data.content) {
-        setLogo(data.content as { image: string; hoverText: string });
+        setLogo(data.content as { image: string; hoverText: string; title: string });
       }
     };
 
@@ -51,7 +51,7 @@ const Navbar = () => {
             ) : (
               <GraduationCap className="h-8 w-8" />
             )}
-            <span>Our School</span>
+            <span>{logo?.title || "Our School"}</span>
           </Link>
 
           {/* Desktop Navigation */}
