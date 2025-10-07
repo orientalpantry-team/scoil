@@ -202,13 +202,8 @@ const Home = () => {
             {aboutData?.title || "About Us"}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-            <div>
-              <p className="text-lg text-muted-foreground whitespace-pre-wrap">
-                {aboutData?.content || "We are dedicated to providing quality education and nurturing young minds to become responsible global citizens. Our experienced faculty and modern facilities create an ideal learning environment."}
-              </p>
-            </div>
             {aboutData?.image && (
-              <div className="order-first md:order-last">
+              <div>
                 <img 
                   src={aboutData.image} 
                   alt={aboutData.title || "About Us"} 
@@ -216,6 +211,11 @@ const Home = () => {
                 />
               </div>
             )}
+            <div>
+              <p className="text-lg text-muted-foreground whitespace-pre-wrap">
+                {aboutData?.content || "We are dedicated to providing quality education and nurturing young minds to become responsible global citizens. Our experienced faculty and modern facilities create an ideal learning environment."}
+              </p>
+            </div>
           </div>
         </div>
       </section>
