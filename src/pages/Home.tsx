@@ -6,6 +6,14 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { BookOpen, Users, Award, Heart, Star } from "lucide-react";
 import { toast } from "sonner";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
+import Autoplay from "embla-carousel-autoplay";
 
 const Home = () => {
   const { data: heroData } = useQuery({
@@ -53,26 +61,47 @@ const Home = () => {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section 
-        className="relative py-20 md:py-32 bg-cover bg-center bg-no-repeat"
-        style={{
-          backgroundImage: heroData?.slides?.[0]?.image 
-            ? `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(${heroData.slides[0].image})`
-            : 'linear-gradient(to bottom right, hsl(var(--primary)), hsl(var(--accent)))'
+      <Carousel
+        opts={{
+          align: "start",
+          loop: true,
         }}
+        plugins={[
+          Autoplay({
+            delay: 5000,
+          }),
+        ]}
+        className="w-full"
       >
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
-            {heroData?.slides?.[0]?.title || "Welcome to Our School"}
-          </h1>
-          <p className="text-xl md:text-2xl text-white/90 mb-8">
-            {heroData?.slides?.[0]?.subtitle || "Building Future Leaders"}
-          </p>
-          <Button size="lg" variant="secondary">
-            Learn More About Us
-          </Button>
-        </div>
-      </section>
+        <CarouselContent>
+          {(heroData?.slides || [{ title: "Welcome to Our School", subtitle: "Building Future Leaders", image: "" }]).map((slide: any, index: number) => (
+            <CarouselItem key={index}>
+              <section 
+                className="relative py-20 md:py-32 bg-cover bg-center bg-no-repeat min-h-[500px] flex items-center"
+                style={{
+                  backgroundImage: slide.image 
+                    ? `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(${slide.image})`
+                    : 'linear-gradient(to bottom right, hsl(var(--primary)), hsl(var(--accent)))'
+                }}
+              >
+                <div className="container mx-auto px-4 text-center">
+                  <h1 className="text-4xl md:text-6xl font-bold text-white mb-6 animate-fade-in">
+                    {slide.title}
+                  </h1>
+                  <p className="text-xl md:text-2xl text-white/90 mb-8 animate-fade-in">
+                    {slide.subtitle}
+                  </p>
+                  <Button size="lg" variant="secondary" className="animate-fade-in">
+                    Learn More About Us
+                  </Button>
+                </div>
+              </section>
+            </CarouselItem>
+          ))}
+        </CarouselContent>
+        <CarouselPrevious className="left-4" />
+        <CarouselNext className="right-4" />
+      </Carousel>
 
       {/* Features Section */}
       <section className="py-16 bg-muted/30">
