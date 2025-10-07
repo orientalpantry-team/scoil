@@ -198,13 +198,24 @@ const Home = () => {
       {/* About Section */}
       <section className="py-16 bg-muted/30">
         <div className="container mx-auto px-4">
-          <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-6">
-              {aboutData?.title || "About Us"}
-            </h2>
-            <p className="text-lg text-muted-foreground">
-              {aboutData?.content || "We are dedicated to providing quality education and nurturing young minds to become responsible global citizens. Our experienced faculty and modern facilities create an ideal learning environment."}
-            </p>
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
+            {aboutData?.title || "About Us"}
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+            <div>
+              <p className="text-lg text-muted-foreground whitespace-pre-wrap">
+                {aboutData?.content || "We are dedicated to providing quality education and nurturing young minds to become responsible global citizens. Our experienced faculty and modern facilities create an ideal learning environment."}
+              </p>
+            </div>
+            {aboutData?.image && (
+              <div className="order-first md:order-last">
+                <img 
+                  src={aboutData.image} 
+                  alt={aboutData.title || "About Us"} 
+                  className="w-full h-auto rounded-lg shadow-lg object-cover"
+                />
+              </div>
+            )}
           </div>
         </div>
       </section>
