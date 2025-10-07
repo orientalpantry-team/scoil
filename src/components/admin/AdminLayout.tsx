@@ -58,11 +58,11 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
     <div className="min-h-screen bg-background">
       <div className="flex">
         {/* Sidebar */}
-        <aside className="w-64 min-h-screen bg-card border-r">
-          <div className="p-6">
+        <aside className="w-64 h-screen bg-card border-r flex flex-col sticky top-0">
+          <div className="p-6 flex-shrink-0">
             <h2 className="text-2xl font-bold text-primary">Admin Panel</h2>
           </div>
-          <nav className="space-y-1 px-3">
+          <nav className="flex-1 overflow-y-auto space-y-1 px-3">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.path;
@@ -82,7 +82,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
               );
             })}
           </nav>
-          <div className="absolute bottom-0 w-64 p-4 border-t space-y-2">
+          <div className="flex-shrink-0 p-4 border-t space-y-2">
             <Link to="/">
               <Button variant="outline" className="w-full justify-start">
                 <Home className="h-5 w-5 mr-2" />
@@ -101,7 +101,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 p-8">{children}</main>
+        <main className="flex-1 p-8 overflow-y-auto">{children}</main>
       </div>
     </div>
   );
