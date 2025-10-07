@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
 interface ProtectedRouteProps {
@@ -7,38 +7,59 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const [hasAccess, setHasAccess] = useState<boolean | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const location = useLocation();
 
   useEffect(() => {
-    checkAdminStatus();
-  }, []);
+    checkAccess();
+  }, [location.pathname]);
 
-  const checkAdminStatus = async () => {
+  const checkAccess = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
-        setIsAdmin(false);
+        setHasAccess(false);
         setLoading(false);
         return;
       }
 
-      // Check if user has admin role
+      // Check user role
       const { data, error } = await supabase
         .from("user_roles")
         .select("role")
         .eq("user_id", session.user.id)
-        .eq("role", "admin")
         .maybeSingle();
 
       if (error || !data) {
-        setIsAdmin(false);
+        setHasAccess(false);
+        setUserRole(null);
       } else {
-        setIsAdmin(true);
+        setUserRole(data.role);
+        
+        // Check route-specific access
+        const path = location.pathname;
+        const role = data.role;
+        
+        // Users can only access dashboard
+        if (role === "user" && path !== "/admin") {
+          setHasAccess(false);
+        }
+        // Editors can't access user management
+        else if (role === "editor" && path === "/admin/users") {
+          setHasAccess(false);
+        }
+        // Admin has full access
+        else if (role === "admin" || role === "editor" || role === "user") {
+          setHasAccess(true);
+        } else {
+          setHasAccess(false);
+        }
       }
     } catch (error) {
-      setIsAdmin(false);
+      setHasAccess(false);
     } finally {
       setLoading(false);
     }
@@ -55,7 +76,14 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     );
   }
 
-  if (isAdmin === false) {
+  if (hasAccess === false) {
+    // If user has a role but no access to this specific route, redirect to their allowed page
+    if (userRole === "user") {
+      return location.pathname !== "/admin" ? <Navigate to="/admin" replace /> : <Navigate to="/auth?error=access_denied" replace />;
+    }
+    if (userRole === "editor") {
+      return location.pathname === "/admin/users" ? <Navigate to="/admin" replace /> : <Navigate to="/auth?error=access_denied" replace />;
+    }
     return <Navigate to="/auth?error=access_denied" replace />;
   }
 

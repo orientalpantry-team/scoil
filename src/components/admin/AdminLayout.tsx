@@ -2,6 +2,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useUserRole } from "@/hooks/useUserRole";
 import {
   LayoutDashboard,
   FileText,
@@ -24,6 +25,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { role } = useUserRole();
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
@@ -42,17 +44,22 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
     }
   };
 
-  const navItems = [
-    { path: "/admin", label: "Dashboard", icon: LayoutDashboard },
-    { path: "/admin/sections", label: "Sections", icon: Settings },
-    { path: "/admin/blogs", label: "Blogs", icon: FileText },
-    { path: "/admin/events", label: "Events", icon: Calendar },
-    { path: "/admin/gallery", label: "Gallery", icon: Image },
-    { path: "/admin/policies", label: "Policies", icon: FileCheck },
-    { path: "/admin/testimonials", label: "Testimonials", icon: MessageSquare },
-    { path: "/admin/contact", label: "Contact Messages", icon: Mail },
-    { path: "/admin/users", label: "User Management", icon: Users },
+  const allNavItems = [
+    { path: "/admin", label: "Dashboard", icon: LayoutDashboard, roles: ["user", "editor", "admin"] },
+    { path: "/admin/sections", label: "Sections", icon: Settings, roles: ["editor", "admin"] },
+    { path: "/admin/blogs", label: "Blogs", icon: FileText, roles: ["editor", "admin"] },
+    { path: "/admin/events", label: "Events", icon: Calendar, roles: ["editor", "admin"] },
+    { path: "/admin/gallery", label: "Gallery", icon: Image, roles: ["editor", "admin"] },
+    { path: "/admin/policies", label: "Policies", icon: FileCheck, roles: ["editor", "admin"] },
+    { path: "/admin/testimonials", label: "Testimonials", icon: MessageSquare, roles: ["editor", "admin"] },
+    { path: "/admin/contact", label: "Contact Messages", icon: Mail, roles: ["editor", "admin"] },
+    { path: "/admin/users", label: "User Management", icon: Users, roles: ["admin"] },
   ];
+
+  // Filter nav items based on user role
+  const navItems = allNavItems.filter(item => 
+    role && item.roles.includes(role)
+  );
 
   return (
     <div className="min-h-screen bg-background">
