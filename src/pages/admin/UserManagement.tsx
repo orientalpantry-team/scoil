@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
-import { UserPlus, CheckCircle, XCircle, Trash2 } from "lucide-react";
+import { UserPlus, CheckCircle, XCircle, Trash2, Pencil } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -43,12 +43,20 @@ import {
 
 const UserManagement = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [newUser, setNewUser] = useState({
     email: "",
     password: "",
     fullName: "",
     role: "user",
   });
+  const [editUser, setEditUser] = useState<{
+    id: string;
+    email: string;
+    fullName: string;
+    status: string;
+    role: string;
+  } | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -150,6 +158,74 @@ const UserManagement = () => {
     },
   });
 
+  // Update user mutation
+  const updateUserMutation = useMutation({
+    mutationFn: async (userData: {
+      id: string;
+      email: string;
+      fullName: string;
+      status: string;
+      role: string;
+    }) => {
+      // Update profile
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({
+          full_name: userData.fullName,
+          status: userData.status,
+        })
+        .eq("id", userData.id);
+
+      if (profileError) throw profileError;
+
+      // Get current role
+      const { data: currentRoles } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userData.id);
+
+      const currentRole = currentRoles?.[0]?.role;
+
+      // Update role if changed
+      if (currentRole !== userData.role) {
+        // Delete old role
+        if (currentRole) {
+          await supabase
+            .from("user_roles")
+            .delete()
+            .eq("user_id", userData.id)
+            .eq("role", currentRole);
+        }
+
+        // Insert new role
+        const { error: roleError } = await supabase
+          .from("user_roles")
+          .insert([{
+            user_id: userData.id,
+            role: userData.role as any,
+          }]);
+
+        if (roleError) throw roleError;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      toast({
+        title: "Success",
+        description: "User updated successfully",
+      });
+      setIsEditDialogOpen(false);
+      setEditUser(null);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   // Delete user mutation
   const deleteUserMutation = useMutation({
     mutationFn: async (userId: string) => {
@@ -189,6 +265,23 @@ const UserManagement = () => {
 
   const handleDelete = (userId: string) => {
     deleteUserMutation.mutate(userId);
+  };
+
+  const handleEdit = (user: any) => {
+    setEditUser({
+      id: user.id,
+      email: user.email,
+      fullName: user.full_name || "",
+      status: user.status,
+      role: user.roles[0] || "user",
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleUpdateUser = () => {
+    if (editUser) {
+      updateUserMutation.mutate(editUser);
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -337,6 +430,13 @@ const UserManagement = () => {
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleEdit(user)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
                       {user.status === "pending" && (
                         <>
                           <Button
@@ -401,6 +501,89 @@ const UserManagement = () => {
           </TableBody>
         </Table>
       </div>
+
+      {/* Edit User Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit User</DialogTitle>
+            <p className="text-sm text-muted-foreground">
+              Update user information and role.
+            </p>
+          </DialogHeader>
+          {editUser && (
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-email">Email</Label>
+                <Input
+                  id="edit-email"
+                  type="email"
+                  value={editUser.email}
+                  disabled
+                  className="bg-muted"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Email cannot be changed
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-fullName">Full Name</Label>
+                <Input
+                  id="edit-fullName"
+                  value={editUser.fullName}
+                  onChange={(e) =>
+                    setEditUser({ ...editUser, fullName: e.target.value })
+                  }
+                  placeholder="John Doe"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-status">Status</Label>
+                <Select
+                  value={editUser.status}
+                  onValueChange={(value) =>
+                    setEditUser({ ...editUser, status: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="approved">Approved</SelectItem>
+                    <SelectItem value="rejected">Rejected</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-role">Role</Label>
+                <Select
+                  value={editUser.role}
+                  onValueChange={(value) =>
+                    setEditUser({ ...editUser, role: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="user">User</SelectItem>
+                    <SelectItem value="admin">Admin</SelectItem>
+                    <SelectItem value="moderator">Moderator</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+          <Button
+            onClick={handleUpdateUser}
+            disabled={updateUserMutation.isPending}
+            className="w-full"
+          >
+            {updateUserMutation.isPending ? "Updating..." : "Update User"}
+          </Button>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
