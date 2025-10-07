@@ -128,6 +128,30 @@ export type Database = {
         }
         Relationships: []
       }
+      gallery_folders: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          external_use: boolean
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          external_use?: boolean
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          external_use?: boolean
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       policies: {
         Row: {
           created_at: string | null

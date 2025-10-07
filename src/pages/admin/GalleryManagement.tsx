@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Trash2, Loader2, FolderOpen } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { FolderManagement } from "@/components/admin/FolderManagement";
 
 interface GalleryItem {
   id: string;
@@ -165,6 +166,8 @@ const GalleryManagement = () => {
 
   return (
     <div>
+      <FolderManagement />
+      
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold">Gallery Management</h1>
