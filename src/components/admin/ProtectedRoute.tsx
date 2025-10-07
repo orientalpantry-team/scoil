@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -10,7 +9,6 @@ interface ProtectedRouteProps {
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
 
   useEffect(() => {
     checkAdminStatus();
@@ -36,11 +34,6 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
       if (error || !data) {
         setIsAdmin(false);
-        toast({
-          title: "Access Denied",
-          description: "You don't have admin permissions",
-          variant: "destructive",
-        });
       } else {
         setIsAdmin(true);
       }
@@ -63,7 +56,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   }
 
   if (isAdmin === false) {
-    return <Navigate to="/auth" replace />;
+    return <Navigate to="/auth?error=access_denied" replace />;
   }
 
   return <>{children}</>;
