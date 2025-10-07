@@ -22,6 +22,7 @@ import EventsManagement from "./pages/admin/EventsManagement";
 import GalleryManagement from "./pages/admin/GalleryManagement";
 import PoliciesManagement from "./pages/admin/PoliciesManagement";
 import TestimonialsManagement from "./pages/admin/TestimonialsManagement";
+import ContactMessages from "./pages/admin/ContactMessages";
 
 const queryClient = new QueryClient();
 
@@ -70,6 +71,7 @@ const App = () => (
                     <Route path="/gallery" element={<GalleryManagement />} />
                     <Route path="/policies" element={<PoliciesManagement />} />
                     <Route path="/testimonials" element={<TestimonialsManagement />} />
+                    <Route path="/contact" element={<ContactMessages />} />
                   </Routes>
                 </AdminLayout>
               </ProtectedRoute>

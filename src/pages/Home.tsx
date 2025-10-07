@@ -64,8 +64,22 @@ const Home = () => {
     },
   });
 
-  const handleContactSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleContactSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    
+    const { error } = await supabase.from("contact_messages").insert({
+      name: formData.get("name") as string,
+      email: formData.get("email") as string,
+      message: formData.get("message") as string,
+    });
+
+    if (error) {
+      toast.error("Failed to send message. Please try again.");
+      console.error("Error saving contact message:", error);
+      return;
+    }
+
     toast.success("Thank you! We'll get back to you soon.");
     (e.target as HTMLFormElement).reset();
   };
@@ -206,13 +220,13 @@ const Home = () => {
               <CardContent className="pt-6">
                 <form onSubmit={handleContactSubmit} className="space-y-4">
                   <div>
-                    <Input placeholder="Your Name" required />
+                    <Input name="name" placeholder="Your Name" required />
                   </div>
                   <div>
-                    <Input type="email" placeholder="Your Email" required />
+                    <Input name="email" type="email" placeholder="Your Email" required />
                   </div>
                   <div>
-                    <Textarea placeholder="Your Message" required rows={5} />
+                    <Textarea name="message" placeholder="Your Message" required rows={5} />
                   </div>
                   <Button type="submit" className="w-full">
                     Send Message
