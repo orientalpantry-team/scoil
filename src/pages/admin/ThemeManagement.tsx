@@ -44,6 +44,16 @@ const ThemeManagement = () => {
   const [sectionStyles, setSectionStyles] = useState<SectionStyles>({});
   const [themeName, setThemeName] = useState("");
 
+  const defaultColors: ThemeColors = {
+    primary: "215 70% 35%",
+    secondary: "15 80% 60%",
+    accent: "145 65% 50%",
+    background: "0 0% 100%",
+    foreground: "222 47% 11%",
+    muted: "210 40% 96%",
+    border: "214 32% 91%",
+  };
+
   const { data: activeTheme, isLoading } = useQuery({
     queryKey: ["active-theme"],
     queryFn: async () => {
@@ -89,8 +99,50 @@ const ThemeManagement = () => {
     },
   });
 
+  const createThemeMutation = useMutation({
+    mutationFn: async () => {
+      // Deactivate current active theme
+      if (activeTheme?.id) {
+        await supabase
+          .from("themes")
+          .update({ is_active: false })
+          .eq("id", activeTheme.id);
+      }
+
+      // Create new theme
+      const { error } = await supabase
+        .from("themes")
+        .insert({
+          name: themeName || "New Theme",
+          is_active: true,
+          colors: colors as any,
+          section_styles: sectionStyles as any,
+        });
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["active-theme"] });
+      toast.success("New theme created successfully");
+    },
+    onError: (error) => {
+      toast.error("Failed to create theme: " + error.message);
+    },
+  });
+
   const handleSave = () => {
     updateThemeMutation.mutate();
+  };
+
+  const handleCreateNew = () => {
+    createThemeMutation.mutate();
+  };
+
+  const handleResetToDefault = () => {
+    setColors(defaultColors);
+    setSectionStyles({});
+    setThemeName("Default Theme");
+    toast.success("Theme reset to default values");
   };
 
   if (isLoading) {
@@ -110,10 +162,26 @@ const ThemeManagement = () => {
             Customize your website's look and feel
           </p>
         </div>
-        <Button onClick={handleSave} disabled={updateThemeMutation.isPending}>
-          {updateThemeMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Save Changes
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            onClick={handleResetToDefault}
+          >
+            Reset to Default
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={handleCreateNew} 
+            disabled={createThemeMutation.isPending}
+          >
+            {createThemeMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Add New Theme
+          </Button>
+          <Button onClick={handleSave} disabled={updateThemeMutation.isPending}>
+            {updateThemeMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Save Changes
+          </Button>
+        </div>
       </div>
 
       <div className="mb-6">
