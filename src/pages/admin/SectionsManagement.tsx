@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { HeroSectionForm } from "@/components/admin/sections/HeroSectionForm";
+import { AboutSectionForm } from "@/components/admin/sections/AboutSectionForm";
+import { ContactSectionForm } from "@/components/admin/sections/ContactSectionForm";
 
 interface Section {
   id: string;
@@ -40,12 +41,12 @@ const SectionsManagement = () => {
     setLoading(false);
   };
 
-  const handleSave = async (section: Section) => {
-    setSaving(section.id);
+  const handleSave = async (sectionId: string, content: any) => {
+    setSaving(sectionId);
     const { error } = await supabase
       .from("sections")
-      .update({ content: section.content })
-      .eq("id", section.id);
+      .update({ content })
+      .eq("id", sectionId);
 
     if (error) {
       toast({
@@ -58,20 +59,45 @@ const SectionsManagement = () => {
         title: "Success",
         description: "Section updated successfully",
       });
+      fetchSections();
     }
     setSaving(null);
   };
 
-  const updateContent = (id: string, newContent: string) => {
-    try {
-      const parsed = JSON.parse(newContent);
-      setSections(sections.map(s => s.id === id ? { ...s, content: parsed } : s));
-    } catch (e) {
-      toast({
-        title: "Invalid JSON",
-        description: "Please enter valid JSON",
-        variant: "destructive",
-      });
+  const renderForm = (section: Section) => {
+    const isSaving = saving === section.id;
+
+    switch (section.key) {
+      case "home.hero":
+        return (
+          <HeroSectionForm
+            content={section.content}
+            onSave={(content) => handleSave(section.id, content)}
+            isSaving={isSaving}
+          />
+        );
+      case "home.about":
+        return (
+          <AboutSectionForm
+            content={section.content}
+            onSave={(content) => handleSave(section.id, content)}
+            isSaving={isSaving}
+          />
+        );
+      case "home.contact":
+        return (
+          <ContactSectionForm
+            content={section.content}
+            onSave={(content) => handleSave(section.id, content)}
+            isSaving={isSaving}
+          />
+        );
+      default:
+        return (
+          <p className="text-muted-foreground">
+            No form available for this section type
+          </p>
+        );
     }
   };
 
@@ -88,25 +114,8 @@ const SectionsManagement = () => {
             <CardHeader>
               <CardTitle className="text-lg">{section.key}</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <Textarea
-                value={JSON.stringify(section.content, null, 2)}
-                onChange={(e) => updateContent(section.id, e.target.value)}
-                className="font-mono text-sm min-h-[200px]"
-              />
-              <Button
-                onClick={() => handleSave(section)}
-                disabled={saving === section.id}
-              >
-                {saving === section.id ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  "Save Changes"
-                )}
-              </Button>
+            <CardContent>
+              {renderForm(section)}
             </CardContent>
           </Card>
         ))}
