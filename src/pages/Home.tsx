@@ -169,7 +169,7 @@ const Home = () => {
                 <CardContent className="pt-6">
                   <div className="flex gap-1 mb-3">
                     {[...Array(testimonial.rating || 5)].map((_, i) => (
-                      <Star key={i} className="h-4 w-4 fill-secondary text-secondary" />
+                      <Star key={i} className="h-4 w-4 fill-amber-500 text-amber-500" />
                     ))}
                   </div>
                   <p className="text-muted-foreground mb-4">"{testimonial.message}"</p>
