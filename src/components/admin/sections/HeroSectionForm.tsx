@@ -4,10 +4,11 @@ import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Trash2, Plus, Upload } from "lucide-react";
+import { Trash2, Plus, Upload, Image as ImageIcon } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { ImageSelector } from "../ImageSelector";
 
 const slideSchema = z.object({
   title: z.string().min(1, "Title is required").max(100, "Title must be less than 100 characters"),
@@ -30,6 +31,7 @@ interface HeroSectionFormProps {
 export const HeroSectionForm = ({ content, onSave, isSaving }: HeroSectionFormProps) => {
   const { toast } = useToast();
   const [uploading, setUploading] = useState<number | null>(null);
+  const [selectingImageFor, setSelectingImageFor] = useState<number | null>(null);
 
   const {
     register,
@@ -84,6 +86,13 @@ export const HeroSectionForm = ({ content, onSave, isSaving }: HeroSectionFormPr
     );
   };
 
+  const handleImageSelect = (imageUrl: string) => {
+    if (selectingImageFor !== null) {
+      setValue(`slides.${selectingImageFor}.image`, imageUrl);
+      setSelectingImageFor(null);
+    }
+  };
+
   return (
     <form onSubmit={handleSubmit(onSave)} className="space-y-6">
       <div className="space-y-4">
@@ -132,11 +141,15 @@ export const HeroSectionForm = ({ content, onSave, isSaving }: HeroSectionFormPr
             <div className="space-y-2">
               <Label>Background Image</Label>
               <div className="flex gap-2">
-                <Input
-                  {...register(`slides.${index}.image`)}
-                  placeholder="Image URL"
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setSelectingImageFor(index)}
                   className="flex-1"
-                />
+                >
+                  <ImageIcon className="h-4 w-4 mr-2" />
+                  Select from Gallery
+                </Button>
                 <Button
                   type="button"
                   variant="outline"
@@ -155,6 +168,11 @@ export const HeroSectionForm = ({ content, onSave, isSaving }: HeroSectionFormPr
                   <Upload className="h-4 w-4" />
                 </Button>
               </div>
+              <Input
+                {...register(`slides.${index}.image`)}
+                placeholder="Or paste image URL"
+                className="mt-2"
+              />
               {slide.image && (
                 <img
                   src={slide.image}
@@ -180,6 +198,13 @@ export const HeroSectionForm = ({ content, onSave, isSaving }: HeroSectionFormPr
       <Button type="submit" disabled={isSaving} className="w-full">
         {isSaving ? "Saving..." : "Save Changes"}
       </Button>
+
+      {selectingImageFor !== null && (
+        <ImageSelector
+          onSelect={handleImageSelect}
+          onClose={() => setSelectingImageFor(null)}
+        />
+      )}
     </form>
   );
 };

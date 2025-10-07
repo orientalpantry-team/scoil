@@ -6,6 +6,7 @@ import { Loader2 } from "lucide-react";
 import { HeroSectionForm } from "@/components/admin/sections/HeroSectionForm";
 import { AboutSectionForm } from "@/components/admin/sections/AboutSectionForm";
 import { ContactSectionForm } from "@/components/admin/sections/ContactSectionForm";
+import { LogoSectionForm } from "@/components/admin/sections/LogoSectionForm";
 
 interface Section {
   id: string;
@@ -87,6 +88,14 @@ const SectionsManagement = () => {
       case "home.contact":
         return (
           <ContactSectionForm
+            content={section.content}
+            onSave={(content) => handleSave(section.id, content)}
+            isSaving={isSaving}
+          />
+        );
+      case "home.logos":
+        return (
+          <LogoSectionForm
             content={section.content}
             onSave={(content) => handleSave(section.id, content)}
             isSaving={isSaving}
