@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Loader2, Palette, Image, Layout, LayoutDashboard } from "lucide-react";
 import { ColorPicker } from "@/components/admin/ColorPicker";
@@ -43,6 +44,8 @@ const ThemeManagement = () => {
   const [colors, setColors] = useState<ThemeColors>({});
   const [sectionStyles, setSectionStyles] = useState<SectionStyles>({});
   const [themeName, setThemeName] = useState("");
+  const [showNewThemeDialog, setShowNewThemeDialog] = useState(false);
+  const [newThemeName, setNewThemeName] = useState("");
 
   const defaultColors: ThemeColors = {
     primary: "215 70% 35%",
@@ -100,7 +103,7 @@ const ThemeManagement = () => {
   });
 
   const createThemeMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (name: string) => {
       // Deactivate current active theme
       if (activeTheme?.id) {
         await supabase
@@ -109,20 +112,22 @@ const ThemeManagement = () => {
           .eq("id", activeTheme.id);
       }
 
-      // Create new theme
+      // Create new theme with provided name
       const { error } = await supabase
         .from("themes")
         .insert({
-          name: themeName || "New Theme",
+          name: name,
           is_active: true,
-          colors: colors as any,
-          section_styles: sectionStyles as any,
+          colors: defaultColors as any,
+          section_styles: {} as any,
         });
 
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["active-theme"] });
+      setShowNewThemeDialog(false);
+      setNewThemeName("");
       toast.success("New theme created successfully");
     },
     onError: (error) => {
@@ -135,7 +140,15 @@ const ThemeManagement = () => {
   };
 
   const handleCreateNew = () => {
-    createThemeMutation.mutate();
+    setShowNewThemeDialog(true);
+  };
+
+  const handleConfirmNewTheme = () => {
+    if (!newThemeName.trim()) {
+      toast.error("Please enter a theme name");
+      return;
+    }
+    createThemeMutation.mutate(newThemeName);
   };
 
   const handleResetToDefault = () => {
@@ -345,6 +358,51 @@ const ThemeManagement = () => {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* New Theme Dialog */}
+      <Dialog open={showNewThemeDialog} onOpenChange={setShowNewThemeDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create New Theme</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="newThemeName">Theme Name</Label>
+              <Input
+                id="newThemeName"
+                value={newThemeName}
+                onChange={(e) => setNewThemeName(e.target.value)}
+                placeholder="e.g., Summer Theme 2025"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    handleConfirmNewTheme();
+                  }
+                }}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowNewThemeDialog(false);
+                setNewThemeName("");
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleConfirmNewTheme}
+              disabled={createThemeMutation.isPending}
+            >
+              {createThemeMutation.isPending && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              Create Theme
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
