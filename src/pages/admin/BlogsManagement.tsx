@@ -7,7 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Upload, Image as ImageIcon } from "lucide-react";
+import { ImageSelector } from "@/components/admin/ImageSelector";
 
 interface Blog {
   id: string;
@@ -24,6 +25,9 @@ const BlogsManagement = () => {
   const [loading, setLoading] = useState(true);
   const [editingBlog, setEditingBlog] = useState<Blog | null>(null);
   const [open, setOpen] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [selectingImage, setSelectingImage] = useState(false);
+  const [coverImageUrl, setCoverImageUrl] = useState("");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -68,6 +72,40 @@ const BlogsManagement = () => {
     }
   };
 
+  const handleImageUpload = async (file: File) => {
+    setUploading(true);
+    try {
+      const fileExt = file.name.split(".").pop();
+      const filePath = `${crypto.randomUUID()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("blogs")
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from("blogs")
+        .getPublicUrl(filePath);
+
+      setCoverImageUrl(publicUrl);
+      toast({ title: "Success", description: "Image uploaded successfully" });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleImageSelect = (imageUrl: string) => {
+    setCoverImageUrl(imageUrl);
+    setSelectingImage(false);
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -75,14 +113,13 @@ const BlogsManagement = () => {
     const slug = formData.get("slug") as string;
     const excerpt = formData.get("excerpt") as string;
     const content = formData.get("content") as string;
-    const cover_image = formData.get("cover_image") as string;
 
     const blogData = {
       title,
       slug,
       excerpt,
       content,
-      cover_image: cover_image || null,
+      cover_image: coverImageUrl || null,
     };
 
     let error;
@@ -108,6 +145,7 @@ const BlogsManagement = () => {
       });
       setOpen(false);
       setEditingBlog(null);
+      setCoverImageUrl("");
       fetchBlogs();
     }
   };
@@ -120,9 +158,18 @@ const BlogsManagement = () => {
     <div>
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Blogs Management</h1>
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={(isOpen) => {
+          setOpen(isOpen);
+          if (!isOpen) {
+            setEditingBlog(null);
+            setCoverImageUrl("");
+          }
+        }}>
           <DialogTrigger asChild>
-            <Button onClick={() => setEditingBlog(null)}>
+            <Button onClick={() => {
+              setEditingBlog(null);
+              setCoverImageUrl("");
+            }}>
               <Plus className="mr-2 h-4 w-4" />
               Add Blog
             </Button>
@@ -170,12 +217,50 @@ const BlogsManagement = () => {
                 />
               </div>
               <div>
-                <Label htmlFor="cover_image">Cover Image URL</Label>
-                <Input
-                  id="cover_image"
-                  name="cover_image"
-                  defaultValue={editingBlog?.cover_image || ""}
-                />
+                <Label htmlFor="cover_image">Cover Image</Label>
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setSelectingImage(true)}
+                      className="flex-1"
+                    >
+                      <ImageIcon className="h-4 w-4 mr-2" />
+                      Select from Gallery
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={uploading}
+                      onClick={() => {
+                        const input = document.createElement("input");
+                        input.type = "file";
+                        input.accept = "image/*";
+                        input.onchange = (e) => {
+                          const file = (e.target as HTMLInputElement).files?.[0];
+                          if (file) handleImageUpload(file);
+                        };
+                        input.click();
+                      }}
+                    >
+                      <Upload className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  {(coverImageUrl || editingBlog?.cover_image) && (
+                    <img
+                      src={coverImageUrl || editingBlog?.cover_image || ""}
+                      alt="Cover preview"
+                      className="w-full h-48 object-cover rounded-md"
+                    />
+                  )}
+                  <Input
+                    id="cover_image"
+                    placeholder="Or paste image URL"
+                    value={coverImageUrl}
+                    onChange={(e) => setCoverImageUrl(e.target.value)}
+                  />
+                </div>
               </div>
               <Button type="submit" className="w-full">
                 {editingBlog ? "Update" : "Create"} Blog
@@ -200,6 +285,7 @@ const BlogsManagement = () => {
                     size="icon"
                     onClick={() => {
                       setEditingBlog(blog);
+                      setCoverImageUrl(blog.cover_image || "");
                       setOpen(true);
                     }}
                   >
@@ -221,6 +307,13 @@ const BlogsManagement = () => {
           </Card>
         ))}
       </div>
+
+      {selectingImage && (
+        <ImageSelector
+          onSelect={handleImageSelect}
+          onClose={() => setSelectingImage(false)}
+        />
+      )}
     </div>
   );
 };

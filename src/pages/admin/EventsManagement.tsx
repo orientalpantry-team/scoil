@@ -7,7 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Upload, Image as ImageIcon } from "lucide-react";
+import { ImageSelector } from "@/components/admin/ImageSelector";
 
 interface Event {
   id: string;
@@ -15,6 +16,7 @@ interface Event {
   description: string;
   start_date: string;
   end_date: string | null;
+  image_url: string | null;
 }
 
 const EventsManagement = () => {
@@ -22,6 +24,9 @@ const EventsManagement = () => {
   const [loading, setLoading] = useState(true);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [open, setOpen] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [selectingImage, setSelectingImage] = useState(false);
+  const [imageUrl, setImageUrl] = useState("");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -66,6 +71,40 @@ const EventsManagement = () => {
     }
   };
 
+  const handleImageUpload = async (file: File) => {
+    setUploading(true);
+    try {
+      const fileExt = file.name.split(".").pop();
+      const filePath = `${crypto.randomUUID()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("uploads")
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from("uploads")
+        .getPublicUrl(filePath);
+
+      setImageUrl(publicUrl);
+      toast({ title: "Success", description: "Image uploaded successfully" });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleImageSelect = (url: string) => {
+    setImageUrl(url);
+    setSelectingImage(false);
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -75,6 +114,7 @@ const EventsManagement = () => {
       description: formData.get("description") as string,
       start_date: formData.get("start_date") as string,
       end_date: (formData.get("end_date") as string) || null,
+      image_url: imageUrl || null,
     };
 
     let error;
@@ -100,6 +140,7 @@ const EventsManagement = () => {
       });
       setOpen(false);
       setEditingEvent(null);
+      setImageUrl("");
       fetchEvents();
     }
   };
@@ -112,9 +153,18 @@ const EventsManagement = () => {
     <div>
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Events Management</h1>
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={(isOpen) => {
+          setOpen(isOpen);
+          if (!isOpen) {
+            setEditingEvent(null);
+            setImageUrl("");
+          }
+        }}>
           <DialogTrigger asChild>
-            <Button onClick={() => setEditingEvent(null)}>
+            <Button onClick={() => {
+              setEditingEvent(null);
+              setImageUrl("");
+            }}>
               <Plus className="mr-2 h-4 w-4" />
               Add Event
             </Button>
@@ -161,6 +211,52 @@ const EventsManagement = () => {
                   defaultValue={editingEvent?.end_date || ""}
                 />
               </div>
+              <div>
+                <Label htmlFor="image">Event Image</Label>
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setSelectingImage(true)}
+                      className="flex-1"
+                    >
+                      <ImageIcon className="h-4 w-4 mr-2" />
+                      Select from Gallery
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={uploading}
+                      onClick={() => {
+                        const input = document.createElement("input");
+                        input.type = "file";
+                        input.accept = "image/*";
+                        input.onchange = (e) => {
+                          const file = (e.target as HTMLInputElement).files?.[0];
+                          if (file) handleImageUpload(file);
+                        };
+                        input.click();
+                      }}
+                    >
+                      <Upload className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  {(imageUrl || editingEvent?.image_url) && (
+                    <img
+                      src={imageUrl || editingEvent?.image_url || ""}
+                      alt="Event preview"
+                      className="w-full h-48 object-cover rounded-md"
+                    />
+                  )}
+                  <Input
+                    id="image"
+                    placeholder="Or paste image URL"
+                    value={imageUrl}
+                    onChange={(e) => setImageUrl(e.target.value)}
+                  />
+                </div>
+              </div>
               <Button type="submit" className="w-full">
                 {editingEvent ? "Update" : "Create"} Event
               </Button>
@@ -187,6 +283,7 @@ const EventsManagement = () => {
                     size="icon"
                     onClick={() => {
                       setEditingEvent(event);
+                      setImageUrl(event.image_url || "");
                       setOpen(true);
                     }}
                   >
@@ -208,6 +305,13 @@ const EventsManagement = () => {
           </Card>
         ))}
       </div>
+
+      {selectingImage && (
+        <ImageSelector
+          onSelect={handleImageSelect}
+          onClose={() => setSelectingImage(false)}
+        />
+      )}
     </div>
   );
 };
