@@ -59,7 +59,10 @@ Deno.serve(async (req) => {
     // Update user password
     const { data: updateData, error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
       userId,
-      { password }
+      { 
+        password,
+        email_confirm: true  // Ensure email is confirmed
+      }
     )
 
     if (updateError) {
@@ -68,6 +71,10 @@ Deno.serve(async (req) => {
     }
 
     console.log('User password updated successfully')
+
+    // Optionally sign out all sessions for this user to force re-login with new password
+    await supabaseAdmin.auth.admin.signOut(userId, 'global')
+    console.log('User sessions cleared')
 
     return new Response(
       JSON.stringify({ success: true }),
