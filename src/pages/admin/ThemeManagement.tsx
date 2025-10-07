@@ -46,6 +46,7 @@ const ThemeManagement = () => {
   const [themeName, setThemeName] = useState("");
   const [showNewThemeDialog, setShowNewThemeDialog] = useState(false);
   const [newThemeName, setNewThemeName] = useState("");
+  const [selectedThemeId, setSelectedThemeId] = useState<string | null>(null);
 
   const defaultColors: ThemeColors = {
     primary: "215 70% 35%",
@@ -57,30 +58,41 @@ const ThemeManagement = () => {
     border: "214 32% 91%",
   };
 
-  const { data: activeTheme, isLoading } = useQuery({
-    queryKey: ["active-theme"],
+  // Fetch all themes
+  const { data: allThemes, isLoading: loadingThemes } = useQuery({
+    queryKey: ["all-themes"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("themes")
         .select("*")
-        .eq("is_active", true)
-        .single();
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
-      
-      if (data) {
-        setColors(data.colors as ThemeColors);
-        setSectionStyles(data.section_styles as SectionStyles);
-        setThemeName(data.name);
-      }
-      
       return data;
     },
   });
 
+  // Get active theme
+  const activeTheme = allThemes?.find((t) => t.is_active);
+
+  // Get selected theme or default to active
+  const selectedTheme = allThemes?.find((t) => t.id === selectedThemeId) || activeTheme;
+
+  // Update local state when selected theme changes
+  useState(() => {
+    if (selectedTheme) {
+      setColors(selectedTheme.colors as ThemeColors);
+      setSectionStyles(selectedTheme.section_styles as SectionStyles);
+      setThemeName(selectedTheme.name);
+      if (!selectedThemeId) {
+        setSelectedThemeId(selectedTheme.id);
+      }
+    }
+  });
+
   const updateThemeMutation = useMutation({
     mutationFn: async () => {
-      if (!activeTheme?.id) throw new Error("No active theme found");
+      if (!selectedTheme?.id) throw new Error("No theme selected");
 
       const { error } = await supabase
         .from("themes")
@@ -89,12 +101,12 @@ const ThemeManagement = () => {
           colors: colors as any,
           section_styles: sectionStyles as any,
         })
-        .eq("id", activeTheme.id);
+        .eq("id", selectedTheme.id);
 
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["active-theme"] });
+      queryClient.invalidateQueries({ queryKey: ["all-themes"] });
       toast.success("Theme updated successfully");
     },
     onError: (error) => {
@@ -102,22 +114,60 @@ const ThemeManagement = () => {
     },
   });
 
+  const activateThemeMutation = useMutation({
+    mutationFn: async (themeId: string) => {
+      // Deactivate all themes
+      const { error: deactivateError } = await supabase
+        .from("themes")
+        .update({ is_active: false })
+        .neq("id", "00000000-0000-0000-0000-000000000000");
+
+      if (deactivateError) throw deactivateError;
+
+      // Activate selected theme
+      const { error: activateError } = await supabase
+        .from("themes")
+        .update({ is_active: true })
+        .eq("id", themeId);
+
+      if (activateError) throw activateError;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["all-themes"] });
+      toast.success("Theme activated successfully");
+    },
+    onError: (error) => {
+      toast.error("Failed to activate theme: " + error.message);
+    },
+  });
+
+  const deleteThemeMutation = useMutation({
+    mutationFn: async (themeId: string) => {
+      const { error } = await supabase
+        .from("themes")
+        .delete()
+        .eq("id", themeId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["all-themes"] });
+      setSelectedThemeId(null);
+      toast.success("Theme deleted successfully");
+    },
+    onError: (error) => {
+      toast.error("Failed to delete theme: " + error.message);
+    },
+  });
+
   const createThemeMutation = useMutation({
     mutationFn: async (name: string) => {
-      // Deactivate current active theme
-      if (activeTheme?.id) {
-        await supabase
-          .from("themes")
-          .update({ is_active: false })
-          .eq("id", activeTheme.id);
-      }
-
-      // Create new theme with provided name
+      // Create new theme (not active by default)
       const { error } = await supabase
         .from("themes")
         .insert({
           name: name,
-          is_active: true,
+          is_active: false,
           colors: defaultColors as any,
           section_styles: {} as any,
         });
@@ -125,7 +175,7 @@ const ThemeManagement = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["active-theme"] });
+      queryClient.invalidateQueries({ queryKey: ["all-themes"] });
       setShowNewThemeDialog(false);
       setNewThemeName("");
       toast.success("New theme created successfully");
@@ -158,7 +208,7 @@ const ThemeManagement = () => {
     toast.success("Theme reset to default values");
   };
 
-  if (isLoading) {
+  if (loadingThemes) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -167,7 +217,7 @@ const ThemeManagement = () => {
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-6xl">
+    <div className="container mx-auto p-6 max-w-7xl">
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-3xl font-bold">Theme Management</h1>
@@ -197,6 +247,76 @@ const ThemeManagement = () => {
         </div>
       </div>
 
+      <div className="grid grid-cols-12 gap-6">
+        {/* Theme List Sidebar */}
+        <div className="col-span-3">
+          <Card>
+            <CardHeader>
+              <CardTitle>Themes</CardTitle>
+              <CardDescription>Select a theme to edit</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {allThemes?.map((theme) => (
+                <div
+                  key={theme.id}
+                  className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                    selectedTheme?.id === theme.id
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-primary/50"
+                  }`}
+                  onClick={() => {
+                    setSelectedThemeId(theme.id);
+                    setColors(theme.colors as ThemeColors);
+                    setSectionStyles(theme.section_styles as SectionStyles);
+                    setThemeName(theme.name);
+                  }}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-medium">{theme.name}</span>
+                    {theme.is_active && (
+                      <span className="text-xs bg-green-500 text-white px-2 py-1 rounded">
+                        Active
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    {!theme.is_active && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          activateThemeMutation.mutate(theme.id);
+                        }}
+                        disabled={activateThemeMutation.isPending}
+                      >
+                        Activate
+                      </Button>
+                    )}
+                    {!theme.is_active && (
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (confirm(`Delete "${theme.name}"?`)) {
+                            deleteThemeMutation.mutate(theme.id);
+                          }
+                        }}
+                        disabled={deleteThemeMutation.isPending}
+                      >
+                        Delete
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Theme Editor */}
+        <div className="col-span-9">
       <div className="mb-6">
         <Label>Theme Name</Label>
         <Input
@@ -358,6 +478,8 @@ const ThemeManagement = () => {
           </Card>
         </TabsContent>
       </Tabs>
+        </div>
+      </div>
 
       {/* New Theme Dialog */}
       <Dialog open={showNewThemeDialog} onOpenChange={setShowNewThemeDialog}>
