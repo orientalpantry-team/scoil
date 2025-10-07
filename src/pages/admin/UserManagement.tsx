@@ -56,6 +56,7 @@ const UserManagement = () => {
     fullName: string;
     status: string;
     role: string;
+    password?: string;
   } | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -166,7 +167,21 @@ const UserManagement = () => {
       fullName: string;
       status: string;
       role: string;
+      password?: string;
     }) => {
+      // Update password if provided
+      if (userData.password) {
+        const { data, error } = await supabase.functions.invoke("update-user", {
+          body: {
+            userId: userData.id,
+            password: userData.password,
+          },
+        });
+
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+      }
+
       // Update profile
       const { error: profileError } = await supabase
         .from("profiles")
@@ -536,6 +551,22 @@ const UserManagement = () => {
                   }
                   placeholder="John Doe"
                 />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-password">New Password (optional)</Label>
+                <Input
+                  id="edit-password"
+                  type="password"
+                  value={editUser.password || ""}
+                  onChange={(e) =>
+                    setEditUser({ ...editUser, password: e.target.value })
+                  }
+                  placeholder="Leave blank to keep current password"
+                  minLength={6}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Minimum 6 characters. Leave blank to keep current password.
+                </p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-status">Status</Label>
