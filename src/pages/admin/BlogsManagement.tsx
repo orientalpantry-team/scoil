@@ -254,12 +254,6 @@ const BlogsManagement = () => {
                       className="w-full h-48 object-cover rounded-md"
                     />
                   )}
-                  <Input
-                    id="cover_image"
-                    placeholder="Or paste image URL"
-                    value={coverImageUrl}
-                    onChange={(e) => setCoverImageUrl(e.target.value)}
-                  />
                 </div>
               </div>
               <Button type="submit" className="w-full">

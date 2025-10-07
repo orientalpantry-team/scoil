@@ -168,11 +168,6 @@ export const HeroSectionForm = ({ content, onSave, isSaving }: HeroSectionFormPr
                   <Upload className="h-4 w-4" />
                 </Button>
               </div>
-              <Input
-                {...register(`slides.${index}.image`)}
-                placeholder="Or paste image URL"
-                className="mt-2"
-              />
               {slide.image && (
                 <img
                   src={slide.image}

@@ -100,11 +100,6 @@ export const LogoSectionForm = ({ content, onSave, isSaving }: LogoSectionFormPr
                   className="w-32 h-32 object-contain rounded-md border bg-white"
                 />
               )}
-              <Input
-                {...register(`logos.${index}.image`)}
-                placeholder="Or paste image URL"
-                className="mt-2"
-              />
               {errors.logos?.[index]?.image && (
                 <p className="text-sm text-destructive">
                   {errors.logos[index]?.image?.message}

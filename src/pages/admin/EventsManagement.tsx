@@ -249,12 +249,6 @@ const EventsManagement = () => {
                       className="w-full h-48 object-cover rounded-md"
                     />
                   )}
-                  <Input
-                    id="image"
-                    placeholder="Or paste image URL"
-                    value={imageUrl}
-                    onChange={(e) => setImageUrl(e.target.value)}
-                  />
                 </div>
               </div>
               <Button type="submit" className="w-full">
