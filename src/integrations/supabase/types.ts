@@ -224,6 +224,36 @@ export type Database = {
         }
         Relationships: []
       }
+      themes: {
+        Row: {
+          colors: Json
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          section_styles: Json
+          updated_at: string
+        }
+        Insert: {
+          colors?: Json
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          section_styles?: Json
+          updated_at?: string
+        }
+        Update: {
+          colors?: Json
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          section_styles?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null

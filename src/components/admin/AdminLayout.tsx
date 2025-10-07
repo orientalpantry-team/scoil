@@ -47,6 +47,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   const allNavItems = [
     { path: "/admin", label: "Dashboard", icon: LayoutDashboard, roles: ["user", "editor", "admin"] },
     { path: "/admin/sections", label: "Sections", icon: Settings, roles: ["editor", "admin"] },
+    { path: "/admin/theme", label: "Theme", icon: Settings, roles: ["editor", "admin"] },
     { path: "/admin/blogs", label: "Blogs", icon: FileText, roles: ["editor", "admin"] },
     { path: "/admin/events", label: "Events", icon: Calendar, roles: ["editor", "admin"] },
     { path: "/admin/gallery", label: "Gallery", icon: Image, roles: ["editor", "admin"] },

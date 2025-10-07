@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { ThemeProvider } from "./contexts/ThemeContext";
 import Navbar from "./components/layout/Navbar";
 import Footer from "./components/layout/Footer";
 import Home from "./pages/Home";
@@ -24,15 +25,17 @@ import PoliciesManagement from "./pages/admin/PoliciesManagement";
 import TestimonialsManagement from "./pages/admin/TestimonialsManagement";
 import ContactMessages from "./pages/admin/ContactMessages";
 import UserManagement from "./pages/admin/UserManagement";
+import ThemeManagement from "./pages/admin/ThemeManagement";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
+    <ThemeProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
         <Routes>
           {/* Public routes */}
           <Route
@@ -74,6 +77,7 @@ const App = () => (
                     <Route path="/testimonials" element={<TestimonialsManagement />} />
                     <Route path="/contact" element={<ContactMessages />} />
                     <Route path="/users" element={<UserManagement />} />
+                    <Route path="/theme" element={<ThemeManagement />} />
                   </Routes>
                 </AdminLayout>
               </ProtectedRoute>
@@ -84,7 +88,8 @@ const App = () => (
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
-    </TooltipProvider>
+      </TooltipProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 
