@@ -36,57 +36,57 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-        <Routes>
-          {/* Public routes */}
-          <Route
-            path="/*"
-            element={
-              <div className="flex flex-col min-h-screen">
-                <Navbar />
-                <main className="flex-1">
-                  <Routes>
-                    <Route path="/" element={<Home />} />
-                    <Route path="/gallery" element={<Gallery />} />
-                    <Route path="/blogs" element={<Blogs />} />
-                    <Route path="/blogs/:slug" element={<BlogDetail />} />
-                    <Route path="/policies" element={<Policies />} />
-                    <Route path="/calendar" element={<Calendar />} />
-                  </Routes>
-                </main>
-                <Footer />
-              </div>
-            }
-          />
+          <Routes>
+            {/* Public routes */}
+            <Route
+              path="/*"
+              element={
+                <div className="flex flex-col min-h-screen">
+                  <Navbar />
+                  <main className="flex-1">
+                    <Routes>
+                      <Route path="/" element={<Home />} />
+                      <Route path="/gallery" element={<Gallery />} />
+                      <Route path="/blogs" element={<Blogs />} />
+                      <Route path="/blogs/:slug" element={<BlogDetail />} />
+                      <Route path="/policies" element={<Policies />} />
+                      <Route path="/calendar" element={<Calendar />} />
+                    </Routes>
+                  </main>
+                  <Footer />
+                </div>
+              }
+            />
 
-          {/* Auth route */}
-          <Route path="/auth" element={<Auth />} />
+            {/* Auth route */}
+            <Route path="/auth" element={<Auth />} />
 
-          {/* Admin routes */}
-          <Route
-            path="/admin/*"
-            element={
-              <ProtectedRoute>
-                <AdminLayout>
-                  <Routes>
-                    <Route path="/" element={<Dashboard />} />
-                    <Route path="/sections" element={<SectionsManagement />} />
-                    <Route path="/blogs" element={<BlogsManagement />} />
-                    <Route path="/events" element={<EventsManagement />} />
-                    <Route path="/gallery" element={<GalleryManagement />} />
-                    <Route path="/policies" element={<PoliciesManagement />} />
-                    <Route path="/testimonials" element={<TestimonialsManagement />} />
-                    <Route path="/contact" element={<ContactMessages />} />
-                    <Route path="/users" element={<UserManagement />} />
-                    <Route path="/theme" element={<ThemeManagement />} />
-                  </Routes>
-                </AdminLayout>
-              </ProtectedRoute>
-            }
-          />
+            {/* Admin routes */}
+            <Route
+              path="/admin/*"
+              element={
+                <ProtectedRoute>
+                  <AdminLayout>
+                    <Routes>
+                      <Route path="/" element={<Dashboard />} />
+                      <Route path="/sections" element={<SectionsManagement />} />
+                      <Route path="/blogs" element={<BlogsManagement />} />
+                      <Route path="/events" element={<EventsManagement />} />
+                      <Route path="/gallery" element={<GalleryManagement />} />
+                      <Route path="/policies" element={<PoliciesManagement />} />
+                      <Route path="/testimonials" element={<TestimonialsManagement />} />
+                      <Route path="/contact" element={<ContactMessages />} />
+                      <Route path="/users" element={<UserManagement />} />
+                      <Route path="/theme" element={<ThemeManagement />} />
+                    </Routes>
+                  </AdminLayout>
+                </ProtectedRoute>
+              }
+            />
 
-          {/* 404 route */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+            {/* 404 route */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
         </BrowserRouter>
       </TooltipProvider>
     </ThemeProvider>
