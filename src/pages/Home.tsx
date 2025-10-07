@@ -132,9 +132,19 @@ const Home = () => {
               const IconComponent = iconMap[feature.icon] || BookOpen;
               
               return (
-                <Card key={index}>
+                <Card key={index} className="overflow-hidden">
                   <CardContent className="pt-6 text-center">
-                    <IconComponent className="h-12 w-12 mx-auto mb-4 text-primary" />
+                    {feature.image ? (
+                      <div className="w-full h-40 mb-4">
+                        <img 
+                          src={feature.image} 
+                          alt={feature.title}
+                          className="w-full h-full object-cover rounded-lg"
+                        />
+                      </div>
+                    ) : (
+                      <IconComponent className="h-12 w-12 mx-auto mb-4 text-primary" />
+                    )}
                     <h3 className="font-semibold text-lg mb-2">{feature.title}</h3>
                     <p className="text-muted-foreground">
                       {feature.description}
