@@ -5,10 +5,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { FolderOpen } from "lucide-react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { FolderOpen, X } from "lucide-react";
 
 const Gallery = () => {
   const [selectedFolder, setSelectedFolder] = useState<string>("all");
+  const [selectedImage, setSelectedImage] = useState<{ url: string; title: string | null } | null>(null);
 
   const { data: images, isLoading } = useQuery({
     queryKey: ["gallery"],
@@ -68,7 +70,11 @@ const Gallery = () => {
         ) : filteredImages && filteredImages.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredImages.map((image) => (
-              <Card key={image.id} className="overflow-hidden group cursor-pointer hover:shadow-lg transition-shadow">
+              <Card 
+                key={image.id} 
+                className="overflow-hidden group cursor-pointer hover:shadow-lg transition-shadow"
+                onClick={() => setSelectedImage({ url: image.image_url, title: image.title })}
+              >
                 <CardContent className="p-0">
                   <div className="aspect-video relative overflow-hidden">
                     <img
@@ -99,6 +105,32 @@ const Gallery = () => {
             </p>
           </div>
         )}
+
+        {/* Image Lightbox */}
+        <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
+          <DialogContent className="max-w-5xl w-full p-0 overflow-hidden">
+            <button
+              onClick={() => setSelectedImage(null)}
+              className="absolute right-4 top-4 z-50 rounded-full bg-background/80 p-2 hover:bg-background transition-colors"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            {selectedImage && (
+              <div className="relative">
+                <img
+                  src={selectedImage.url}
+                  alt={selectedImage.title || "Gallery image"}
+                  className="w-full h-auto max-h-[85vh] object-contain"
+                />
+                {selectedImage.title && (
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-6">
+                    <h3 className="text-white text-xl font-semibold">{selectedImage.title}</h3>
+                  </div>
+                )}
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

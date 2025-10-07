@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 
 const contactSchema = z.object({
+  schoolName: z.string().trim().min(1, "School name is required").max(100, "School name must be less than 100 characters"),
   phone: z.string().min(1, "Phone number is required").regex(/^[\d\s\-\+\(\)]+$/, "Invalid phone number format"),
   email: z.string().email("Invalid email address").max(255, "Email must be less than 255 characters"),
   address: z.string().min(1, "Address is required").max(500, "Address must be less than 500 characters"),
@@ -32,6 +33,17 @@ export const ContactSectionForm = ({ content, onSave, isSaving }: ContactSection
 
   return (
     <form onSubmit={handleSubmit(onSave)} className="space-y-6">
+      <div className="space-y-2">
+        <Label htmlFor="schoolName">School Name</Label>
+        <Input
+          {...register("schoolName")}
+          placeholder="e.g., Springfield Elementary School"
+        />
+        {errors.schoolName && (
+          <p className="text-sm text-destructive">{errors.schoolName.message}</p>
+        )}
+      </div>
+
       <div className="space-y-2">
         <Label htmlFor="phone">Phone Number</Label>
         <Input
