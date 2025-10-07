@@ -7,6 +7,7 @@ import { HeroSectionForm } from "@/components/admin/sections/HeroSectionForm";
 import { AboutSectionForm } from "@/components/admin/sections/AboutSectionForm";
 import { ContactSectionForm } from "@/components/admin/sections/ContactSectionForm";
 import { LogoSectionForm } from "@/components/admin/sections/LogoSectionForm";
+import { FeaturesSectionForm } from "@/components/admin/sections/FeaturesSectionForm";
 
 interface Section {
   id: string;
@@ -96,6 +97,14 @@ const SectionsManagement = () => {
       case "home.logos":
         return (
           <LogoSectionForm
+            content={section.content}
+            onSave={(content) => handleSave(section.id, content)}
+            isSaving={isSaving}
+          />
+        );
+      case "home.features":
+        return (
+          <FeaturesSectionForm
             content={section.content}
             onSave={(content) => handleSave(section.id, content)}
             isSaving={isSaving}

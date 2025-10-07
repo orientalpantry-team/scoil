@@ -40,6 +40,18 @@ const Home = () => {
     },
   });
 
+  const { data: featuresData } = useQuery({
+    queryKey: ["section", "home.features"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("sections")
+        .select("content")
+        .eq("key", "home.features")
+        .single();
+      return data?.content as any;
+    },
+  });
+
   const { data: testimonials } = useQuery({
     queryKey: ["testimonials"],
     queryFn: async () => {
@@ -107,45 +119,30 @@ const Home = () => {
       <section className="py-16 bg-muted/30">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
-            Why Choose Our School
+            {featuresData?.title || "Why Choose Our School"}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card>
-              <CardContent className="pt-6 text-center">
-                <BookOpen className="h-12 w-12 mx-auto mb-4 text-primary" />
-                <h3 className="font-semibold text-lg mb-2">Quality Education</h3>
-                <p className="text-muted-foreground">
-                  Comprehensive curriculum designed for excellence
-                </p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6 text-center">
-                <Users className="h-12 w-12 mx-auto mb-4 text-secondary" />
-                <h3 className="font-semibold text-lg mb-2">Expert Teachers</h3>
-                <p className="text-muted-foreground">
-                  Dedicated and experienced faculty members
-                </p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6 text-center">
-                <Award className="h-12 w-12 mx-auto mb-4 text-accent" />
-                <h3 className="font-semibold text-lg mb-2">Excellence</h3>
-                <p className="text-muted-foreground">
-                  Track record of outstanding achievements
-                </p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6 text-center">
-                <Heart className="h-12 w-12 mx-auto mb-4 text-destructive" />
-                <h3 className="font-semibold text-lg mb-2">Caring Environment</h3>
-                <p className="text-muted-foreground">
-                  Nurturing and supportive atmosphere
-                </p>
-              </CardContent>
-            </Card>
+            {(featuresData?.features || []).map((feature: any, index: number) => {
+              const iconMap: Record<string, any> = {
+                BookOpen,
+                Users,
+                Award,
+                Heart,
+              };
+              const IconComponent = iconMap[feature.icon] || BookOpen;
+              
+              return (
+                <Card key={index}>
+                  <CardContent className="pt-6 text-center">
+                    <IconComponent className="h-12 w-12 mx-auto mb-4 text-primary" />
+                    <h3 className="font-semibold text-lg mb-2">{feature.title}</h3>
+                    <p className="text-muted-foreground">
+                      {feature.description}
+                    </p>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         </div>
       </section>
