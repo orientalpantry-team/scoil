@@ -114,12 +114,9 @@ const Home = () => {
                   <h1 className="text-4xl md:text-6xl font-bold text-white mb-6 animate-fade-in">
                     {slide.title}
                   </h1>
-                  <p className="text-xl md:text-2xl text-white/90 mb-8 animate-fade-in">
+                  <p className="text-xl md:text-2xl text-white/90 animate-fade-in">
                     {slide.subtitle}
                   </p>
-                  <Button size="lg" variant="secondary" className="animate-fade-in">
-                    Learn More About Us
-                  </Button>
                 </div>
               </section>
             </CarouselItem>
