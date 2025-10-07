@@ -7,7 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Upload, ExternalLink } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface Policy {
   id: string;
@@ -19,6 +20,7 @@ interface Policy {
 const PoliciesManagement = () => {
   const [policies, setPolicies] = useState<Policy[]>([]);
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
   const [editingPolicy, setEditingPolicy] = useState<Policy | null>(null);
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
@@ -45,53 +47,94 @@ const PoliciesManagement = () => {
     setLoading(false);
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: string, fileUrl: string | null) => {
     if (!confirm("Are you sure you want to delete this policy?")) return;
 
-    const { error } = await supabase.from("policies").delete().eq("id", id);
+    try {
+      // Delete file from storage if it exists and is in our bucket
+      if (fileUrl && fileUrl.includes("/policies/")) {
+        const urlParts = fileUrl.split("/policies/");
+        if (urlParts.length > 1) {
+          const filePath = urlParts[1];
+          await supabase.storage.from("policies").remove([filePath]);
+        }
+      }
 
-    if (error) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    } else {
+      // Delete from database
+      const { error } = await supabase.from("policies").delete().eq("id", id);
+      if (error) throw error;
+
       toast({
         title: "Success",
         description: "Policy deleted successfully",
       });
       fetchPolicies();
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    
-    const policyData = {
-      title: formData.get("title") as string,
-      description: formData.get("description") as string,
-      file_url: (formData.get("file_url") as string) || null,
-    };
-
-    let error;
-    if (editingPolicy) {
-      ({ error } = await supabase
-        .from("policies")
-        .update(policyData)
-        .eq("id", editingPolicy.id));
-    } else {
-      ({ error } = await supabase.from("policies").insert([policyData]));
-    }
-
-    if (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
         description: error.message,
         variant: "destructive",
       });
-    } else {
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setUploading(true);
+    
+    const formData = new FormData(e.currentTarget);
+    const file = formData.get("file") as File | null;
+    const fileUrl = formData.get("file_url") as string;
+    
+    let uploadedFileUrl = fileUrl || editingPolicy?.file_url || null;
+
+    try {
+      // Handle file upload if a file is selected
+      if (file && file.size > 0) {
+        const fileExt = file.name.split(".").pop();
+        const fileName = `${Date.now()}.${fileExt}`;
+        
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from("policies")
+          .upload(fileName, file);
+
+        if (uploadError) throw uploadError;
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from("policies")
+          .getPublicUrl(fileName);
+
+        uploadedFileUrl = publicUrl;
+
+        // Delete old file if updating and old file was in storage
+        if (editingPolicy?.file_url && editingPolicy.file_url.includes("/policies/")) {
+          const urlParts = editingPolicy.file_url.split("/policies/");
+          if (urlParts.length > 1) {
+            const oldFilePath = urlParts[1];
+            await supabase.storage.from("policies").remove([oldFilePath]);
+          }
+        }
+      }
+
+      const policyData = {
+        title: formData.get("title") as string,
+        description: formData.get("description") as string,
+        file_url: uploadedFileUrl,
+      };
+
+      let error;
+      if (editingPolicy) {
+        ({ error } = await supabase
+          .from("policies")
+          .update(policyData)
+          .eq("id", editingPolicy.id));
+      } else {
+        ({ error } = await supabase.from("policies").insert([policyData]));
+      }
+
+      if (error) throw error;
+
       toast({
         title: "Success",
         description: `Policy ${editingPolicy ? "updated" : "created"} successfully`,
@@ -99,6 +142,14 @@ const PoliciesManagement = () => {
       setOpen(false);
       setEditingPolicy(null);
       fetchPolicies();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -140,18 +191,58 @@ const PoliciesManagement = () => {
                   rows={4}
                 />
               </div>
-              <div>
-                <Label htmlFor="file_url">File URL (PDF)</Label>
-                <Input
-                  id="file_url"
-                  name="file_url"
-                  type="url"
-                  defaultValue={editingPolicy?.file_url || ""}
-                  placeholder="https://example.com/policy.pdf"
-                />
-              </div>
-              <Button type="submit" className="w-full">
-                {editingPolicy ? "Update" : "Create"} Policy
+              
+              <Tabs defaultValue="upload">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="upload">
+                    <Upload className="mr-2 h-4 w-4" />
+                    Upload File
+                  </TabsTrigger>
+                  <TabsTrigger value="url">
+                    <ExternalLink className="mr-2 h-4 w-4" />
+                    File URL
+                  </TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="upload" className="space-y-2">
+                  <Label htmlFor="file">Upload PDF Document</Label>
+                  <Input
+                    id="file"
+                    name="file"
+                    type="file"
+                    accept=".pdf,.doc,.docx"
+                  />
+                  {editingPolicy?.file_url && (
+                    <p className="text-xs text-muted-foreground">
+                      Current file: <a href={editingPolicy.file_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">View</a>
+                    </p>
+                  )}
+                </TabsContent>
+                
+                <TabsContent value="url" className="space-y-2">
+                  <Label htmlFor="file_url">File URL</Label>
+                  <Input
+                    id="file_url"
+                    name="file_url"
+                    type="url"
+                    defaultValue={editingPolicy?.file_url || ""}
+                    placeholder="https://example.com/policy.pdf"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Enter a direct link to the policy document
+                  </p>
+                </TabsContent>
+              </Tabs>
+
+              <Button type="submit" className="w-full" disabled={uploading}>
+                {uploading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {editingPolicy ? "Updating..." : "Creating..."}
+                  </>
+                ) : (
+                  <>{editingPolicy ? "Update" : "Create"} Policy</>
+                )}
               </Button>
             </form>
           </DialogContent>
@@ -190,7 +281,7 @@ const PoliciesManagement = () => {
                   <Button
                     variant="destructive"
                     size="icon"
-                    onClick={() => handleDelete(policy.id)}
+                    onClick={() => handleDelete(policy.id, policy.file_url)}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
