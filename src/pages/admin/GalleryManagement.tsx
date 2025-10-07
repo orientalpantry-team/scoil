@@ -4,14 +4,23 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, Loader2 } from "lucide-react";
+import { Plus, Trash2, Loader2, FolderOpen } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface GalleryItem {
   id: string;
   title: string | null;
   image_url: string;
+  folder: string;
 }
 
 const GalleryManagement = () => {
@@ -19,6 +28,8 @@ const GalleryManagement = () => {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [open, setOpen] = useState(false);
+  const [selectedFolder, setSelectedFolder] = useState<string>("all");
+  const [newFolder, setNewFolder] = useState("");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -43,52 +54,108 @@ const GalleryManagement = () => {
     setLoading(false);
   };
 
+  const folders = ["all", ...Array.from(new Set(items.map((item) => item.folder || "general")))];
+
+  const filteredItems = selectedFolder === "all" 
+    ? items 
+    : items.filter((item) => item.folder === selectedFolder);
+
   const handleUpload = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setUploading(true);
 
     const formData = new FormData(e.currentTarget);
+    const files = formData.getAll("images") as File[];
+    const folder = (formData.get("folder") as string) || newFolder || "general";
     const title = formData.get("title") as string;
-    const imageUrl = formData.get("image_url") as string;
 
-    const { error } = await supabase
-      .from("gallery")
-      .insert([{ title: title || null, image_url: imageUrl }]);
+    if (files.length === 0) {
+      toast({
+        title: "Error",
+        description: "Please select at least one image",
+        variant: "destructive",
+      });
+      setUploading(false);
+      return;
+    }
 
-    if (error) {
+    try {
+      const uploadPromises = files.map(async (file, index) => {
+        // Upload to storage
+        const fileExt = file.name.split(".").pop();
+        const fileName = `${folder}/${Date.now()}-${index}.${fileExt}`;
+        
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from("gallery")
+          .upload(fileName, file);
+
+        if (uploadError) throw uploadError;
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from("gallery")
+          .getPublicUrl(fileName);
+
+        // Insert into database
+        const itemTitle = files.length === 1 ? title : (title ? `${title} ${index + 1}` : null);
+        
+        return supabase
+          .from("gallery")
+          .insert([{ 
+            title: itemTitle || null, 
+            image_url: publicUrl,
+            folder: folder
+          }]);
+      });
+
+      await Promise.all(uploadPromises);
+
+      toast({
+        title: "Success",
+        description: `${files.length} image(s) uploaded successfully`,
+      });
+      setOpen(false);
+      setNewFolder("");
+      fetchGallery();
+    } catch (error: any) {
       toast({
         title: "Error",
         description: error.message,
         variant: "destructive",
       });
-    } else {
-      toast({
-        title: "Success",
-        description: "Image added to gallery",
-      });
-      setOpen(false);
-      fetchGallery();
     }
+    
     setUploading(false);
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: string, imageUrl: string) => {
     if (!confirm("Are you sure you want to delete this image?")) return;
 
-    const { error } = await supabase.from("gallery").delete().eq("id", id);
+    try {
+      // Extract file path from URL
+      const urlParts = imageUrl.split("/gallery/");
+      if (urlParts.length > 1) {
+        const filePath = urlParts[1];
+        // Delete from storage
+        await supabase.storage.from("gallery").remove([filePath]);
+      }
 
-    if (error) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    } else {
+      // Delete from database
+      const { error } = await supabase.from("gallery").delete().eq("id", id);
+
+      if (error) throw error;
+
       toast({
         title: "Success",
         description: "Image deleted successfully",
       });
       fetchGallery();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
     }
   };
 
@@ -99,45 +166,81 @@ const GalleryManagement = () => {
   return (
     <div>
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Gallery Management</h1>
+        <div>
+          <h1 className="text-3xl font-bold">Gallery Management</h1>
+          <p className="text-muted-foreground mt-1">
+            {filteredItems.length} image{filteredItems.length !== 1 ? "s" : ""}
+          </p>
+        </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="mr-2 h-4 w-4" />
-              Add Image
+              Upload Images
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Add New Image</DialogTitle>
+              <DialogTitle>Upload Images</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleUpload} className="space-y-4">
               <div>
-                <Label htmlFor="image_url">Image URL</Label>
+                <Label htmlFor="images">Select Images (Multiple)</Label>
                 <Input
-                  id="image_url"
-                  name="image_url"
-                  type="url"
+                  id="images"
+                  name="images"
+                  type="file"
+                  accept="image/*"
+                  multiple
                   required
-                  placeholder="https://example.com/image.jpg"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  You can select multiple images at once
+                </p>
+              </div>
+              <div>
+                <Label htmlFor="folder">Folder</Label>
+                <Select name="folder">
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select or create folder" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {folders.filter(f => f !== "all").map((folder) => (
+                      <SelectItem key={folder} value={folder}>
+                        {folder}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="newFolder">Or Create New Folder</Label>
+                <Input
+                  id="newFolder"
+                  value={newFolder}
+                  onChange={(e) => setNewFolder(e.target.value)}
+                  placeholder="e.g., events, sports, academics"
                 />
               </div>
               <div>
-                <Label htmlFor="title">Title (Optional)</Label>
+                <Label htmlFor="title">Base Title (Optional)</Label>
                 <Input
                   id="title"
                   name="title"
                   placeholder="Image title"
                 />
+                <p className="text-xs text-muted-foreground mt-1">
+                  For multiple images, numbers will be appended
+                </p>
               </div>
               <Button type="submit" className="w-full" disabled={uploading}>
                 {uploading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Adding...
+                    Uploading...
                   </>
                 ) : (
-                  "Add Image"
+                  "Upload Images"
                 )}
               </Button>
             </form>
@@ -145,8 +248,28 @@ const GalleryManagement = () => {
         </Dialog>
       </div>
 
+      {/* Folder filter */}
+      <div className="flex gap-2 mb-6 flex-wrap">
+        {folders.map((folder) => (
+          <Button
+            key={folder}
+            variant={selectedFolder === folder ? "default" : "outline"}
+            size="sm"
+            onClick={() => setSelectedFolder(folder)}
+          >
+            <FolderOpen className="mr-2 h-4 w-4" />
+            {folder}
+            {folder !== "all" && (
+              <Badge variant="secondary" className="ml-2">
+                {items.filter((item) => item.folder === folder).length}
+              </Badge>
+            )}
+          </Button>
+        ))}
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {items.map((item) => (
+        {filteredItems.map((item) => (
           <Card key={item.id} className="overflow-hidden">
             <CardContent className="p-0">
               <div className="relative group">
@@ -159,17 +282,20 @@ const GalleryManagement = () => {
                   <Button
                     variant="destructive"
                     size="icon"
-                    onClick={() => handleDelete(item.id)}
+                    onClick={() => handleDelete(item.id, item.image_url)}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
-              {item.title && (
-                <div className="p-4">
-                  <p className="font-medium">{item.title}</p>
+              <div className="p-4">
+                <div className="flex items-center justify-between">
+                  {item.title && <p className="font-medium">{item.title}</p>}
+                  <Badge variant="secondary" className="text-xs">
+                    {item.folder}
+                  </Badge>
                 </div>
-              )}
+              </div>
             </CardContent>
           </Card>
         ))}
