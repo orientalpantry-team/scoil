@@ -15,9 +15,13 @@ import {
 } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useState, useRef } from "react";
 
 const Home = () => {
   const { theme } = useTheme();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const lastSubmitTime = useRef<number>(0);
+  const formMountTime = useRef<number>(Date.now());
   const { data: heroData } = useQuery({
     queryKey: ["section", "home.hero"],
     queryFn: async () => {
@@ -80,7 +84,32 @@ const Home = () => {
 
   const handleContactSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    
+    if (isSubmitting) return;
+    
     const formData = new FormData(e.currentTarget);
+    
+    // Honeypot check - if this field is filled, it's likely a bot
+    const honeypot = formData.get("website") as string;
+    if (honeypot) {
+      toast.error("Invalid submission detected.");
+      return;
+    }
+    
+    // Rate limiting - prevent submissions within 30 seconds
+    const now = Date.now();
+    if (now - lastSubmitTime.current < 30000) {
+      toast.error("Please wait before submitting again.");
+      return;
+    }
+    
+    // Time-based check - form must be visible for at least 3 seconds
+    if (now - formMountTime.current < 3000) {
+      toast.error("Please take your time filling out the form.");
+      return;
+    }
+    
+    setIsSubmitting(true);
     
     const { error } = await supabase.from("contact_messages").insert({
       name: formData.get("name") as string,
@@ -91,11 +120,14 @@ const Home = () => {
     if (error) {
       toast.error("Failed to send message. Please try again.");
       console.error("Error saving contact message:", error);
+      setIsSubmitting(false);
       return;
     }
 
+    lastSubmitTime.current = now;
     toast.success("Thank you! We'll get back to you soon.");
     (e.target as HTMLFormElement).reset();
+    setIsSubmitting(false);
   };
 
   return (
@@ -297,17 +329,31 @@ const Home = () => {
               <Card>
                 <CardContent className="pt-6">
                   <form onSubmit={handleContactSubmit} className="space-y-4">
+                    {/* Honeypot field - hidden from users but bots will fill it */}
+                    <input
+                      type="text"
+                      name="website"
+                      tabIndex={-1}
+                      autoComplete="off"
+                      style={{
+                        position: "absolute",
+                        left: "-9999px",
+                        width: "1px",
+                        height: "1px",
+                      }}
+                      aria-hidden="true"
+                    />
                     <div>
-                      <Input name="name" placeholder="Your Name" required />
+                      <Input name="name" placeholder="Your Name" required maxLength={100} />
                     </div>
                     <div>
-                      <Input name="email" type="email" placeholder="Your Email" required />
+                      <Input name="email" type="email" placeholder="Your Email" required maxLength={255} />
                     </div>
                     <div>
-                      <Textarea name="message" placeholder="Your Message" required rows={5} />
+                      <Textarea name="message" placeholder="Your Message" required rows={5} maxLength={1000} />
                     </div>
-                    <Button type="submit" className="w-full">
-                      Send Message
+                    <Button type="submit" className="w-full" disabled={isSubmitting}>
+                      {isSubmitting ? "Sending..." : "Send Message"}
                     </Button>
                   </form>
                 </CardContent>
