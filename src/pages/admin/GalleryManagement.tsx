@@ -113,6 +113,25 @@ const GalleryManagement = () => {
     }
 
     try {
+      // Check if folder exists in gallery_folders, if not create it
+      const { data: existingFolder } = await supabase
+        .from("gallery_folders")
+        .select("*")
+        .eq("name", folder)
+        .maybeSingle();
+
+      if (!existingFolder) {
+        const { error: folderError } = await supabase
+          .from("gallery_folders")
+          .insert({
+            name: folder,
+            external_use: false,
+            enabled: true,
+          });
+
+        if (folderError) throw folderError;
+      }
+
       const uploadPromises = files.map(async (file, index) => {
         // Upload to storage
         const fileExt = file.name.split(".").pop();
@@ -150,6 +169,7 @@ const GalleryManagement = () => {
       setOpen(false);
       setNewFolder("");
       fetchGallery();
+      fetchFolders();
     } catch (error: any) {
       toast({
         title: "Error",
