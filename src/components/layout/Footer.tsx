@@ -7,21 +7,32 @@ import { useTheme } from "@/contexts/ThemeContext";
 const Footer = () => {
   const { theme } = useTheme();
   const [logo, setLogo] = useState<{ image: string; hoverText: string; title: string } | null>(null);
+  const [contactData, setContactData] = useState<{ email: string; phone: string; address: string } | null>(null);
 
   useEffect(() => {
-    const fetchLogo = async () => {
-      const { data } = await supabase
+    const fetchData = async () => {
+      const { data: logoData } = await supabase
         .from("sections")
         .select("content")
         .eq("key", "home.logos")
         .single();
       
-      if (data?.content && typeof data.content === 'object' && 'image' in data.content) {
-        setLogo(data.content as { image: string; hoverText: string; title: string });
+      if (logoData?.content && typeof logoData.content === 'object' && 'image' in logoData.content) {
+        setLogo(logoData.content as { image: string; hoverText: string; title: string });
+      }
+
+      const { data: contactInfo } = await supabase
+        .from("sections")
+        .select("content")
+        .eq("key", "home.contact")
+        .single();
+      
+      if (contactInfo?.content) {
+        setContactData(contactInfo.content as { email: string; phone: string; address: string });
       }
     };
 
-    fetchLogo();
+    fetchData();
   }, []);
 
   return (
@@ -91,15 +102,15 @@ const Footer = () => {
             <ul className="space-y-2">
               <li className="flex items-center gap-2 text-primary-foreground/80">
                 <Mail className="h-4 w-4" />
-                <span>info@school.com</span>
+                <span>{contactData?.email || "info@school.com"}</span>
               </li>
               <li className="flex items-center gap-2 text-primary-foreground/80">
                 <Phone className="h-4 w-4" />
-                <span>+1234567890</span>
+                <span>{contactData?.phone || "+1234567890"}</span>
               </li>
               <li className="flex items-center gap-2 text-primary-foreground/80">
                 <MapPin className="h-4 w-4" />
-                <span>123 School St</span>
+                <span>{contactData?.address || "123 School St"}</span>
               </li>
             </ul>
           </div>
