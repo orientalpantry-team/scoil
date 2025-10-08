@@ -39,6 +39,11 @@ interface SectionStyles {
   header?: SectionStyle & { height?: string };
   footer?: SectionStyle;
   pageTitle?: SectionStyle;
+  blogsPage?: SectionStyle;
+  eventsPage?: SectionStyle;
+  galleryPage?: SectionStyle;
+  policiesPage?: SectionStyle;
+  calendarPage?: SectionStyle;
 }
 
 const ThemeManagement = () => {
@@ -441,21 +446,103 @@ const ThemeManagement = () => {
         </TabsContent>
 
         <TabsContent value="pages">
-          <Card>
-            <CardHeader>
-              <CardTitle>Page Title Section</CardTitle>
-              <CardDescription>
-                Customize the page title section that appears at the top of content pages
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <SectionStyleEditor
-                title="Page Title Section"
-                value={sectionStyles.pageTitle || {}}
-                onChange={(val) => setSectionStyles({ ...sectionStyles, pageTitle: val })}
-              />
-            </CardContent>
-          </Card>
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Default Page Title Section</CardTitle>
+                <CardDescription>
+                  Default styling for page title sections across all pages
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <SectionStyleEditor
+                  title="Default Page Title"
+                  value={sectionStyles.pageTitle || {}}
+                  onChange={(val) => setSectionStyles({ ...sectionStyles, pageTitle: val })}
+                />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Blogs Page</CardTitle>
+                <CardDescription>
+                  Customize the title section for the blogs page
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <SectionStyleEditor
+                  title="Blogs Page Title"
+                  value={sectionStyles.blogsPage || {}}
+                  onChange={(val) => setSectionStyles({ ...sectionStyles, blogsPage: val })}
+                />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Events Page</CardTitle>
+                <CardDescription>
+                  Customize the title section for the events/calendar page
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <SectionStyleEditor
+                  title="Events Page Title"
+                  value={sectionStyles.eventsPage || {}}
+                  onChange={(val) => setSectionStyles({ ...sectionStyles, eventsPage: val })}
+                />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Gallery Page</CardTitle>
+                <CardDescription>
+                  Customize the title section for the gallery page
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <SectionStyleEditor
+                  title="Gallery Page Title"
+                  value={sectionStyles.galleryPage || {}}
+                  onChange={(val) => setSectionStyles({ ...sectionStyles, galleryPage: val })}
+                />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Policies Page</CardTitle>
+                <CardDescription>
+                  Customize the title section for the policies page
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <SectionStyleEditor
+                  title="Policies Page Title"
+                  value={sectionStyles.policiesPage || {}}
+                  onChange={(val) => setSectionStyles({ ...sectionStyles, policiesPage: val })}
+                />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Calendar Page</CardTitle>
+                <CardDescription>
+                  Customize the title section for the school calendar page
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <SectionStyleEditor
+                  title="Calendar Page Title"
+                  value={sectionStyles.calendarPage || {}}
+                  onChange={(val) => setSectionStyles({ ...sectionStyles, calendarPage: val })}
+                />
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         <TabsContent value="borders">
