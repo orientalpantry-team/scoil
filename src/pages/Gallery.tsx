@@ -42,7 +42,7 @@ const Gallery = () => {
   ))];
   
   const filteredImages = selectedFolder === "all" 
-    ? images 
+    ? images?.filter((img) => externalFolders?.includes(img.folder || "general"))
     : images?.filter((img) => img.folder === selectedFolder);
 
   return (
