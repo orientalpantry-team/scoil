@@ -1,6 +1,7 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useUserRole } from "@/hooks/useUserRole";
 import {
@@ -15,6 +16,7 @@ import {
   Home,
   Mail,
   Users,
+  User,
 } from "lucide-react";
 
 interface AdminLayoutProps {
@@ -26,6 +28,24 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { role } = useUserRole();
+  const [userName, setUserName] = useState<string>("");
+
+  useEffect(() => {
+    const fetchUserName = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("full_name, email")
+          .eq("id", user.id)
+          .single();
+        
+        setUserName(profile?.full_name || profile?.email || user.email || "User");
+      }
+    };
+    
+    fetchUserName();
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -70,6 +90,15 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
         <aside className="w-64 h-screen bg-card border-r flex flex-col sticky top-0">
           <div className="p-6 flex-shrink-0">
             <h2 className="text-2xl font-bold text-primary">Admin Panel</h2>
+            <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
+              <User className="h-4 w-4" />
+              <span>{userName}</span>
+            </div>
+            {role && (
+              <div className="mt-1 text-xs text-muted-foreground capitalize">
+                Role: {role}
+              </div>
+            )}
           </div>
           <nav className="flex-1 overflow-y-auto space-y-1 px-3">
             {navItems.map((item) => {
