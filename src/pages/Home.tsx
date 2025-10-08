@@ -66,6 +66,18 @@ const Home = () => {
     },
   });
 
+  const { data: contactData } = useQuery({
+    queryKey: ["section", "home.contact"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("sections")
+        .select("content")
+        .eq("key", "home.contact")
+        .single();
+      return data?.content as any;
+    },
+  });
+
   const handleContactSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -252,28 +264,55 @@ const Home = () => {
         }}
       >
         <div className="container mx-auto px-4">
-          <div className="max-w-xl mx-auto">
+          <div className="max-w-4xl mx-auto">
             <h2 className="text-3xl md:text-4xl font-bold text-center mb-8">
               Get in Touch
             </h2>
-            <Card>
-              <CardContent className="pt-6">
-                <form onSubmit={handleContactSubmit} className="space-y-4">
-                  <div>
-                    <Input name="name" placeholder="Your Name" required />
-                  </div>
-                  <div>
-                    <Input name="email" type="email" placeholder="Your Email" required />
-                  </div>
-                  <div>
-                    <Textarea name="message" placeholder="Your Message" required rows={5} />
-                  </div>
-                  <Button type="submit" className="w-full">
-                    Send Message
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Contact Information */}
+              {contactData && (
+                <Card>
+                  <CardContent className="pt-6 space-y-4">
+                    <div>
+                      <h3 className="font-semibold text-lg mb-2">School Information</h3>
+                      <p className="text-xl font-bold text-primary">{contactData.schoolName}</p>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold mb-1">Phone</h4>
+                      <p className="text-muted-foreground">{contactData.phone}</p>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold mb-1">Email</h4>
+                      <p className="text-muted-foreground">{contactData.email}</p>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold mb-1">Address</h4>
+                      <p className="text-muted-foreground whitespace-pre-wrap">{contactData.address}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+              
+              {/* Contact Form */}
+              <Card>
+                <CardContent className="pt-6">
+                  <form onSubmit={handleContactSubmit} className="space-y-4">
+                    <div>
+                      <Input name="name" placeholder="Your Name" required />
+                    </div>
+                    <div>
+                      <Input name="email" type="email" placeholder="Your Email" required />
+                    </div>
+                    <div>
+                      <Textarea name="message" placeholder="Your Message" required rows={5} />
+                    </div>
+                    <Button type="submit" className="w-full">
+                      Send Message
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
       </section>
