@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { FolderOpen, X } from "lucide-react";
+import PageTitle from "@/components/layout/PageTitle";
 
 const Gallery = () => {
   const [selectedFolder, setSelectedFolder] = useState<string>("all");
@@ -46,14 +47,13 @@ const Gallery = () => {
     : images?.filter((img) => img.folder === selectedFolder);
 
   return (
-    <div className="min-h-screen py-16">
-      <div className="container mx-auto px-4">
-        <h1 className="text-4xl md:text-5xl font-bold text-center mb-4">
-          Gallery
-        </h1>
-        <p className="text-center text-muted-foreground mb-12 text-lg">
-          Moments captured from our school activities and events
-        </p>
+    <div className="min-h-screen">
+      <PageTitle 
+        title="Gallery" 
+        description="Moments captured from our school activities and events"
+        pageKey="galleryPage"
+      />
+      <div className="container mx-auto px-4 pb-16">
 
         {/* Folder filter */}
         {!isLoading && images && images.length > 0 && (

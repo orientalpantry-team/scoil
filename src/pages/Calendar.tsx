@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CalendarIcon } from "lucide-react";
+import PageTitle from "@/components/layout/PageTitle";
 
 const Calendar = () => {
   const { data: events, isLoading } = useQuery({
@@ -29,14 +30,13 @@ const Calendar = () => {
   });
 
   return (
-    <div className="min-h-screen py-16">
-      <div className="container mx-auto px-4">
-        <h1 className="text-4xl md:text-5xl font-bold text-center mb-4">
-          School Calendar
-        </h1>
-        <p className="text-center text-muted-foreground mb-12 text-lg">
-          Upcoming events and important dates
-        </p>
+    <div className="min-h-screen">
+      <PageTitle 
+        title="School Calendar" 
+        description="Upcoming events and important dates"
+        pageKey="calendarPage"
+      />
+      <div className="container mx-auto px-4 pb-16">
 
         {isLoading ? (
           <div className="max-w-4xl mx-auto space-y-4">

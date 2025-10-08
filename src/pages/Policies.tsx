@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FileText, Download } from "lucide-react";
+import PageTitle from "@/components/layout/PageTitle";
 
 const Policies = () => {
   const { data: policies, isLoading } = useQuery({
@@ -18,14 +19,13 @@ const Policies = () => {
   });
 
   return (
-    <div className="min-h-screen py-16">
-      <div className="container mx-auto px-4">
-        <h1 className="text-4xl md:text-5xl font-bold text-center mb-4">
-          School Policies
-        </h1>
-        <p className="text-center text-muted-foreground mb-12 text-lg">
-          Important policies and guidelines
-        </p>
+    <div className="min-h-screen">
+      <PageTitle 
+        title="School Policies" 
+        description="Important policies and guidelines"
+        pageKey="policiesPage"
+      />
+      <div className="container mx-auto px-4 pb-16">
 
         {isLoading ? (
           <div className="max-w-4xl mx-auto space-y-4">

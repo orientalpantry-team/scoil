@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Calendar } from "lucide-react";
+import PageTitle from "@/components/layout/PageTitle";
 
 const Blogs = () => {
   const { data: blogs, isLoading } = useQuery({
@@ -19,14 +20,13 @@ const Blogs = () => {
   });
 
   return (
-    <div className="min-h-screen py-16">
-      <div className="container mx-auto px-4">
-        <h1 className="text-4xl md:text-5xl font-bold text-center mb-4">
-          School Blog
-        </h1>
-        <p className="text-center text-muted-foreground mb-12 text-lg">
-          Latest news and updates from our school
-        </p>
+    <div className="min-h-screen">
+      <PageTitle 
+        title="School Blog" 
+        description="Latest news and updates from our school"
+        pageKey="blogsPage"
+      />
+      <div className="container mx-auto px-4 pb-16">
 
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
