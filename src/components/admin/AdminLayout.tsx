@@ -29,19 +29,18 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
-    if (error) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    } else {
-      toast({
-        title: "Success",
-        description: "Logged out successfully",
-      });
-      navigate("/auth");
+    
+    // Always redirect to auth page, even if there's an error
+    // (session might already be expired/invalid)
+    if (error && error.message !== "Auth session missing!") {
+      console.warn("Logout warning:", error.message);
     }
+    
+    toast({
+      title: "Success",
+      description: "Logged out successfully",
+    });
+    navigate("/auth");
   };
 
   const allNavItems = [
