@@ -28,19 +28,21 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   const { role } = useUserRole();
 
   const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
-    
-    // Always redirect to auth page, even if there's an error
-    // (session might already be expired/invalid)
-    if (error && error.message !== "Auth session missing!") {
-      console.warn("Logout warning:", error.message);
+    try {
+      // Sign out from Supabase
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.warn("Logout error:", error);
+    } finally {
+      // Always redirect and show success, even if there's an error
+      toast({
+        title: "Success",
+        description: "Logged out successfully",
+      });
+      
+      // Use replace to prevent back button from returning to admin
+      navigate("/auth", { replace: true });
     }
-    
-    toast({
-      title: "Success",
-      description: "Logged out successfully",
-    });
-    navigate("/auth");
   };
 
   const allNavItems = [
