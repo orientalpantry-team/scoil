@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { FolderOpen, Edit, Trash2, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface GalleryFolder {
   id: string;
@@ -20,34 +21,52 @@ interface GalleryFolder {
 }
 
 export const FolderManagement = () => {
-  const [folders, setFolders] = useState<GalleryFolder[]>([]);
   const [editingFolder, setEditingFolder] = useState<GalleryFolder | null>(null);
   const [newFolderName, setNewFolderName] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    fetchFolders();
-  }, []);
+  const { data: folders = [] } = useQuery({
+    queryKey: ["gallery-folders"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("gallery_folders")
+        .select("*")
+        .order("name");
 
-  const fetchFolders = async () => {
-    const { data, error } = await supabase
-      .from("gallery_folders")
-      .select("*")
-      .order("name");
+      if (error) throw error;
+      return data as GalleryFolder[];
+    },
+  });
 
-    if (error) {
+  const createFolderMutation = useMutation({
+    mutationFn: async (name: string) => {
+      const { error } = await supabase
+        .from("gallery_folders")
+        .insert([{ name: name.trim() }]);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["gallery-folders"] });
+      queryClient.invalidateQueries({ queryKey: ["gallery-folders-external"] });
+      toast({
+        title: "Success",
+        description: "Folder created successfully",
+      });
+      setNewFolderName("");
+      setIsDialogOpen(false);
+    },
+    onError: (error: Error) => {
       toast({
         title: "Error",
         description: error.message,
         variant: "destructive",
       });
-    } else {
-      setFolders(data || []);
-    }
-  };
+    },
+  });
 
-  const handleCreateFolder = async () => {
+  const handleCreateFolder = () => {
     if (!newFolderName.trim()) {
       toast({
         title: "Error",
@@ -56,75 +75,108 @@ export const FolderManagement = () => {
       });
       return;
     }
-
-    const { error } = await supabase
-      .from("gallery_folders")
-      .insert([{ name: newFolderName.trim() }]);
-
-    if (error) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    } else {
-      toast({
-        title: "Success",
-        description: "Folder created successfully",
-      });
-      setNewFolderName("");
-      setIsDialogOpen(false);
-      fetchFolders();
-    }
+    createFolderMutation.mutate(newFolderName);
   };
 
-  const handleUpdateFolder = async (folder: GalleryFolder, updates: Partial<GalleryFolder>) => {
-    const { error } = await supabase
-      .from("gallery_folders")
-      .update(updates)
-      .eq("id", folder.id);
-
-    if (error) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    } else {
+  const updateFolderMutation = useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<GalleryFolder> }) => {
+      const { error } = await supabase
+        .from("gallery_folders")
+        .update(updates)
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["gallery-folders"] });
+      queryClient.invalidateQueries({ queryKey: ["gallery-folders-external"] });
       toast({
         title: "Success",
         description: "Folder updated successfully",
       });
-      fetchFolders();
-    }
-  };
-
-  const handleDeleteFolder = async (folder: GalleryFolder) => {
-    if (!confirm(`Are you sure you want to delete the folder "${folder.name}"? Images in this folder will not be deleted.`)) {
-      return;
-    }
-
-    const { error } = await supabase
-      .from("gallery_folders")
-      .delete()
-      .eq("id", folder.id);
-
-    if (error) {
+    },
+    onError: (error: Error) => {
       toast({
         title: "Error",
         description: error.message,
         variant: "destructive",
       });
-    } else {
+    },
+  });
+
+  const handleUpdateFolder = (folder: GalleryFolder, updates: Partial<GalleryFolder>) => {
+    updateFolderMutation.mutate({ id: folder.id, updates });
+  };
+
+  const deleteFolderMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("gallery_folders")
+        .delete()
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["gallery-folders"] });
+      queryClient.invalidateQueries({ queryKey: ["gallery-folders-external"] });
       toast({
         title: "Success",
         description: "Folder deleted successfully",
       });
-      fetchFolders();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleDeleteFolder = (folder: GalleryFolder) => {
+    if (!confirm(`Are you sure you want to delete the folder "${folder.name}"? Images in this folder will not be deleted.`)) {
+      return;
     }
+    deleteFolderMutation.mutate(folder.id);
   };
 
-  const handleRenameFolder = async (folder: GalleryFolder, newName: string) => {
+  const renameFolderMutation = useMutation({
+    mutationFn: async ({ folderId, oldName, newName }: { folderId: string; oldName: string; newName: string }) => {
+      // Update folder name in gallery_folders table
+      const { error: folderError } = await supabase
+        .from("gallery_folders")
+        .update({ name: newName.trim() })
+        .eq("id", folderId);
+
+      if (folderError) throw folderError;
+
+      // Update all gallery items with this folder name
+      const { error: galleryError } = await supabase
+        .from("gallery")
+        .update({ folder: newName.trim() })
+        .eq("folder", oldName);
+
+      if (galleryError) throw new Error("Folder renamed but some gallery items may not be updated");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["gallery-folders"] });
+      queryClient.invalidateQueries({ queryKey: ["gallery-folders-external"] });
+      queryClient.invalidateQueries({ queryKey: ["gallery"] });
+      toast({
+        title: "Success",
+        description: "Folder renamed successfully",
+      });
+      setEditingFolder(null);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleRenameFolder = (folder: GalleryFolder, newName: string) => {
     if (!newName.trim()) {
       toast({
         title: "Error",
@@ -133,43 +185,7 @@ export const FolderManagement = () => {
       });
       return;
     }
-
-    // Update folder name in gallery_folders table
-    const { error: folderError } = await supabase
-      .from("gallery_folders")
-      .update({ name: newName.trim() })
-      .eq("id", folder.id);
-
-    if (folderError) {
-      toast({
-        title: "Error",
-        description: folderError.message,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Update all gallery items with this folder name
-    const { error: galleryError } = await supabase
-      .from("gallery")
-      .update({ folder: newName.trim() })
-      .eq("folder", folder.name);
-
-    if (galleryError) {
-      toast({
-        title: "Warning",
-        description: "Folder renamed but some gallery items may not be updated",
-        variant: "destructive",
-      });
-    } else {
-      toast({
-        title: "Success",
-        description: "Folder renamed successfully",
-      });
-    }
-
-    setEditingFolder(null);
-    fetchFolders();
+    renameFolderMutation.mutate({ folderId: folder.id, oldName: folder.name, newName });
   };
 
   return (
