@@ -100,8 +100,7 @@ const Gallery = () => {
                     />
                   </div>
                   <div className="p-4">
-                    <div className="flex items-center justify-between">
-                      {image.title && <h3 className="font-semibold">{image.title}</h3>}
+                    <div className="flex items-center justify-end">
                       <Badge variant="secondary" className="text-xs">
                         {image.folder || "general"}
                       </Badge>
