@@ -13,9 +13,9 @@ import {
 } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, Loader2, FolderOpen } from "lucide-react";
+import { Plus, Trash2, Loader2, FolderOpen, Pencil } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { FolderManagement } from "@/components/admin/FolderManagement";
+import { Switch } from "@/components/ui/switch";
 
 interface GalleryItem {
   id: string;
@@ -24,17 +24,31 @@ interface GalleryItem {
   folder: string;
 }
 
+interface GalleryFolder {
+  id: string;
+  name: string;
+  external_use: boolean;
+  enabled: boolean;
+}
+
 const GalleryManagement = () => {
   const [items, setItems] = useState<GalleryItem[]>([]);
+  const [folders, setFolders] = useState<GalleryFolder[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [open, setOpen] = useState(false);
+  const [editFolderOpen, setEditFolderOpen] = useState(false);
   const [selectedFolder, setSelectedFolder] = useState<string>("all");
   const [newFolder, setNewFolder] = useState("");
+  const [editingFolder, setEditingFolder] = useState<GalleryFolder | null>(null);
+  const [folderName, setFolderName] = useState("");
+  const [folderExternalUse, setFolderExternalUse] = useState(false);
+  const [folderEnabled, setFolderEnabled] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
     fetchGallery();
+    fetchFolders();
   }, []);
 
   const fetchGallery = async () => {
@@ -55,7 +69,25 @@ const GalleryManagement = () => {
     setLoading(false);
   };
 
-  const folders = ["all", ...Array.from(new Set(items.map((item) => item.folder || "general")))];
+  const fetchFolders = async () => {
+    const { data, error } = await supabase
+      .from("gallery_folders")
+      .select("*")
+      .order("name");
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      setFolders(data || []);
+    }
+  };
+
+  const imageFolders = Array.from(new Set(items.map((item) => item.folder || "general")));
+  const allFolders = ["all", ...imageFolders];
 
   const filteredItems = selectedFolder === "all" 
     ? items 
@@ -160,14 +192,92 @@ const GalleryManagement = () => {
     }
   };
 
+  const openEditFolder = (folderName: string) => {
+    const folder = folders.find(f => f.name === folderName);
+    if (folder) {
+      setEditingFolder(folder);
+      setFolderName(folder.name);
+      setFolderExternalUse(folder.external_use);
+      setFolderEnabled(folder.enabled);
+      setEditFolderOpen(true);
+    }
+  };
+
+  const handleSaveFolder = async () => {
+    if (!editingFolder) return;
+
+    try {
+      const { error } = await supabase
+        .from("gallery_folders")
+        .update({
+          name: folderName,
+          external_use: folderExternalUse,
+          enabled: folderEnabled,
+        })
+        .eq("id", editingFolder.id);
+
+      if (error) throw error;
+
+      // Update folder name in gallery items if name changed
+      if (folderName !== editingFolder.name) {
+        await supabase
+          .from("gallery")
+          .update({ folder: folderName })
+          .eq("folder", editingFolder.name);
+      }
+
+      toast({
+        title: "Success",
+        description: "Folder updated successfully",
+      });
+      setEditFolderOpen(false);
+      fetchFolders();
+      fetchGallery();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteFolder = async () => {
+    if (!editingFolder) return;
+    if (!confirm("Are you sure you want to delete this folder? Images in this folder will remain but will need to be reassigned.")) return;
+
+    try {
+      const { error } = await supabase
+        .from("gallery_folders")
+        .delete()
+        .eq("id", editingFolder.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Folder deleted successfully",
+      });
+      setEditFolderOpen(false);
+      fetchFolders();
+      if (selectedFolder === editingFolder.name) {
+        setSelectedFolder("all");
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   if (loading) {
     return <div className="flex justify-center p-8"><Loader2 className="h-8 w-8 animate-spin" /></div>;
   }
 
   return (
     <div>
-      <FolderManagement />
-      
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold">Gallery Management</h1>
@@ -208,7 +318,7 @@ const GalleryManagement = () => {
                     <SelectValue placeholder="Select or create folder" />
                   </SelectTrigger>
                   <SelectContent>
-                    {folders.filter(f => f !== "all").map((folder) => (
+                    {imageFolders.map((folder) => (
                       <SelectItem key={folder} value={folder}>
                         {folder}
                       </SelectItem>
@@ -253,23 +363,88 @@ const GalleryManagement = () => {
 
       {/* Folder filter */}
       <div className="flex gap-2 mb-6 flex-wrap">
-        {folders.map((folder) => (
-          <Button
-            key={folder}
-            variant={selectedFolder === folder ? "default" : "outline"}
-            size="sm"
-            onClick={() => setSelectedFolder(folder)}
-          >
-            <FolderOpen className="mr-2 h-4 w-4" />
-            {folder}
-            {folder !== "all" && (
-              <Badge variant="secondary" className="ml-2">
-                {items.filter((item) => item.folder === folder).length}
-              </Badge>
-            )}
-          </Button>
-        ))}
+        {allFolders.map((folder) => {
+          const folderData = folders.find(f => f.name === folder);
+          return (
+            <div key={folder} className="flex items-center gap-1">
+              <Button
+                variant={selectedFolder === folder ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedFolder(folder)}
+              >
+                <FolderOpen className="mr-2 h-4 w-4" />
+                {folder}
+                {folder !== "all" && (
+                  <Badge variant="secondary" className="ml-2">
+                    {items.filter((item) => item.folder === folder).length}
+                  </Badge>
+                )}
+              </Button>
+              {folder !== "all" && folderData && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9"
+                  onClick={() => openEditFolder(folder)}
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+          );
+        })}
       </div>
+
+      {/* Edit Folder Dialog */}
+      <Dialog open={editFolderOpen} onOpenChange={setEditFolderOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Folder</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="folderName">Folder Name</Label>
+              <Input
+                id="folderName"
+                value={folderName}
+                onChange={(e) => setFolderName(e.target.value)}
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="externalUse">External Use</Label>
+              <Switch
+                id="externalUse"
+                checked={folderExternalUse}
+                onCheckedChange={setFolderExternalUse}
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="enabled">Enabled</Label>
+              <Switch
+                id="enabled"
+                checked={folderEnabled}
+                onCheckedChange={setFolderEnabled}
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="destructive"
+                onClick={handleDeleteFolder}
+                className="flex-1"
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
+              </Button>
+              <Button
+                onClick={handleSaveFolder}
+                className="flex-1"
+              >
+                Save
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredItems.map((item) => (
