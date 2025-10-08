@@ -135,7 +135,7 @@ const GalleryManagement = () => {
       const uploadPromises = files.map(async (file, index) => {
         // Upload to storage
         const fileExt = file.name.split(".").pop();
-        const fileName = `${folder}/${Date.now()}-${index}.${fileExt}`;
+        const fileName = `${folder}/${crypto.randomUUID()}.${fileExt}`;
         
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from("gallery")
