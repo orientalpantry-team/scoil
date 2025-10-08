@@ -27,11 +27,26 @@ const EventsManagement = () => {
   const [uploading, setUploading] = useState(false);
   const [selectingImage, setSelectingImage] = useState(false);
   const [imageUrl, setImageUrl] = useState("");
+  const [googleCalendarUrl, setGoogleCalendarUrl] = useState("");
+  const [savingCalendar, setSavingCalendar] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     fetchEvents();
+    fetchGoogleCalendarUrl();
   }, []);
+
+  const fetchGoogleCalendarUrl = async () => {
+    const { data } = await supabase
+      .from("sections")
+      .select("content")
+      .eq("key", "calendar.google")
+      .single();
+    
+    if (data?.content && typeof data.content === 'object' && 'url' in data.content) {
+      setGoogleCalendarUrl((data.content as { url: string }).url || "");
+    }
+  };
 
   const fetchEvents = async () => {
     const { data, error } = await supabase
@@ -143,6 +158,28 @@ const EventsManagement = () => {
       setImageUrl("");
       fetchEvents();
     }
+  };
+
+  const handleSaveGoogleCalendar = async () => {
+    setSavingCalendar(true);
+    const { error } = await supabase
+      .from("sections")
+      .update({ content: { url: googleCalendarUrl } })
+      .eq("key", "calendar.google");
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Success",
+        description: "Google Calendar link saved successfully",
+      });
+    }
+    setSavingCalendar(false);
   };
 
   if (loading) {
@@ -258,6 +295,33 @@ const EventsManagement = () => {
           </DialogContent>
         </Dialog>
       </div>
+
+      {/* Google Calendar Configuration */}
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle>Google Calendar Integration</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="googleCalendar">Google Calendar Embed URL</Label>
+              <p className="text-sm text-muted-foreground mb-2">
+                Paste the Google Calendar embed URL (iframe src). Get it from Google Calendar → Settings → Integrate calendar → Public URL
+              </p>
+              <Input
+                id="googleCalendar"
+                value={googleCalendarUrl}
+                onChange={(e) => setGoogleCalendarUrl(e.target.value)}
+                placeholder="https://calendar.google.com/calendar/embed?src=..."
+              />
+            </div>
+            <Button onClick={handleSaveGoogleCalendar} disabled={savingCalendar}>
+              {savingCalendar ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Save Google Calendar Link
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid gap-4">
         {events.map((event) => (

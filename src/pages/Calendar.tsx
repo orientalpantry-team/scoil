@@ -16,6 +16,18 @@ const Calendar = () => {
     },
   });
 
+  const { data: googleCalendarData } = useQuery({
+    queryKey: ["googleCalendar"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("sections")
+        .select("content")
+        .eq("key", "calendar.google")
+        .single();
+      return data?.content as { url: string } | null;
+    },
+  });
+
   return (
     <div className="min-h-screen py-16">
       <div className="container mx-auto px-4">
@@ -33,7 +45,7 @@ const Calendar = () => {
             ))}
           </div>
         ) : events && events.length > 0 ? (
-          <div className="max-w-4xl mx-auto space-y-4">
+          <div className="max-w-4xl mx-auto space-y-4 mb-12">
             {events.map((event) => (
               <Card key={event.id} className="hover:shadow-lg transition-shadow">
                 <CardHeader>
@@ -59,6 +71,26 @@ const Calendar = () => {
         ) : (
           <div className="text-center py-12">
             <p className="text-muted-foreground text-lg">No upcoming events.</p>
+          </div>
+        )}
+
+        {/* Google Calendar Embed */}
+        {googleCalendarData?.url && (
+          <div className="max-w-4xl mx-auto mt-16">
+            <h2 className="text-3xl font-bold text-center mb-8">Full Calendar</h2>
+            <Card>
+              <CardContent className="p-0">
+                <div className="relative w-full" style={{ paddingBottom: "75%" }}>
+                  <iframe
+                    src={googleCalendarData.url}
+                    className="absolute top-0 left-0 w-full h-full rounded-lg"
+                    frameBorder="0"
+                    scrolling="no"
+                    title="School Google Calendar"
+                  />
+                </div>
+              </CardContent>
+            </Card>
           </div>
         )}
       </div>
