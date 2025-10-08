@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useToast } from "@/hooks/use-toast";
 import { FolderOpen, Edit, Trash2, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface GalleryFolder {
   id: string;
@@ -204,8 +205,9 @@ export const FolderManagement = () => {
         </Dialog>
       </CardHeader>
       <CardContent>
-        <div className="space-y-3">
-          {folders.map((folder) => (
+        <ScrollArea className="h-[400px] pr-4">
+          <div className="space-y-3">
+            {folders.map((folder) => (
             <div key={folder.id} className="flex items-center justify-between p-3 border rounded-lg">
               <div className="flex items-center gap-3 flex-1">
                 <FolderOpen className="h-5 w-5 text-muted-foreground" />
@@ -290,7 +292,8 @@ export const FolderManagement = () => {
               )}
             </div>
           ))}
-        </div>
+          </div>
+        </ScrollArea>
       </CardContent>
     </Card>
   );

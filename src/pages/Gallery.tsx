@@ -23,7 +23,23 @@ const Gallery = () => {
     },
   });
 
-  const folders = ["all", ...Array.from(new Set(images?.map((img) => img.folder || "general") || []))];
+  const { data: externalFolders } = useQuery({
+    queryKey: ["gallery-folders-external"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("gallery_folders")
+        .select("name")
+        .eq("external_use", true)
+        .eq("enabled", true);
+      return data?.map(f => f.name) || [];
+    },
+  });
+
+  const folders = ["all", ...Array.from(new Set(
+    images
+      ?.map((img) => img.folder || "general")
+      .filter(folder => externalFolders?.includes(folder)) || []
+  ))];
   
   const filteredImages = selectedFolder === "all" 
     ? images 
