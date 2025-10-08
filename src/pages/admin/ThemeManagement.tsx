@@ -38,6 +38,7 @@ interface SectionStyles {
   contact?: SectionStyle;
   header?: SectionStyle & { height?: string };
   footer?: SectionStyle;
+  pageTitle?: SectionStyle;
 }
 
 const ThemeManagement = () => {
@@ -328,7 +329,7 @@ const ThemeManagement = () => {
       </div>
 
       <Tabs defaultValue="colors" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="colors">
             <Palette className="h-4 w-4 mr-2" />
             Colors
@@ -336,6 +337,10 @@ const ThemeManagement = () => {
           <TabsTrigger value="sections">
             <Layout className="h-4 w-4 mr-2" />
             Sections
+          </TabsTrigger>
+          <TabsTrigger value="pages">
+            <LayoutDashboard className="h-4 w-4 mr-2" />
+            Pages
           </TabsTrigger>
           <TabsTrigger value="borders">
             <Image className="h-4 w-4 mr-2" />
@@ -433,6 +438,24 @@ const ThemeManagement = () => {
               onChange={(val) => setSectionStyles({ ...sectionStyles, footer: val })}
             />
           </div>
+        </TabsContent>
+
+        <TabsContent value="pages">
+          <Card>
+            <CardHeader>
+              <CardTitle>Page Title Section</CardTitle>
+              <CardDescription>
+                Customize the page title section that appears at the top of content pages
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <SectionStyleEditor
+                title="Page Title Section"
+                value={sectionStyles.pageTitle || {}}
+                onChange={(val) => setSectionStyles({ ...sectionStyles, pageTitle: val })}
+              />
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="borders">
