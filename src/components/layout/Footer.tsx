@@ -62,11 +62,8 @@ const Footer = () => {
               ) : (
                 <GraduationCap className="h-8 w-8" />
               )}
-              <span className="font-bold text-xl">{logo?.title || "Our School"}</span>
+            <span className="font-bold text-xl">{logo?.title || "Our School"}</span>
             </div>
-            <p className="text-primary-foreground/80">
-              Building future leaders through quality education and values.
-            </p>
           </div>
 
           {/* Quick Links */}
