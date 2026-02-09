@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Pencil, Trash2, Loader2, Upload, ExternalLink, GripVertical } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { EnrollmentSectionSettings } from "@/components/admin/EnrollmentSectionSettings";
 
 interface EnrollmentForm {
   id: string;
@@ -204,13 +205,19 @@ const EnrollmentManagement = () => {
     <div>
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Enrollment Management</h1>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={() => setEditingForm(null)}>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Form
-            </Button>
-          </DialogTrigger>
+      </div>
+
+      <EnrollmentSectionSettings />
+
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-xl font-semibold">Enrollment Forms</h2>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>
+          <Button onClick={() => setEditingForm(null)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Form
+          </Button>
+        </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>{editingForm ? "Edit Enrollment Form" : "Add New Enrollment Form"}</DialogTitle>
