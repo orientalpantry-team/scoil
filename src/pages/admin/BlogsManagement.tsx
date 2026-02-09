@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
@@ -18,6 +19,7 @@ interface Blog {
   content: string;
   cover_image: string | null;
   published_at: string;
+  show_on_homepage: boolean;
 }
 
 const BlogsManagement = () => {
@@ -28,6 +30,7 @@ const BlogsManagement = () => {
   const [uploading, setUploading] = useState(false);
   const [selectingImage, setSelectingImage] = useState(false);
   const [coverImageUrl, setCoverImageUrl] = useState("");
+  const [showOnHomepage, setShowOnHomepage] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -120,6 +123,7 @@ const BlogsManagement = () => {
       excerpt,
       content,
       cover_image: coverImageUrl || null,
+      show_on_homepage: showOnHomepage,
     };
 
     let error;
@@ -146,6 +150,7 @@ const BlogsManagement = () => {
       setOpen(false);
       setEditingBlog(null);
       setCoverImageUrl("");
+      setShowOnHomepage(false);
       fetchBlogs();
     }
   };
@@ -163,12 +168,14 @@ const BlogsManagement = () => {
           if (!isOpen) {
             setEditingBlog(null);
             setCoverImageUrl("");
+            setShowOnHomepage(false);
           }
         }}>
           <DialogTrigger asChild>
             <Button onClick={() => {
               setEditingBlog(null);
               setCoverImageUrl("");
+              setShowOnHomepage(false);
             }}>
               <Plus className="mr-2 h-4 w-4" />
               Add Blog
@@ -256,6 +263,14 @@ const BlogsManagement = () => {
                   )}
                 </div>
               </div>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="show_on_homepage">Show on Homepage</Label>
+                <Switch
+                  id="show_on_homepage"
+                  checked={showOnHomepage}
+                  onCheckedChange={setShowOnHomepage}
+                />
+              </div>
               <Button type="submit" className="w-full">
                 {editingBlog ? "Update" : "Create"} Blog
               </Button>
@@ -280,6 +295,7 @@ const BlogsManagement = () => {
                     onClick={() => {
                       setEditingBlog(blog);
                       setCoverImageUrl(blog.cover_image || "");
+                      setShowOnHomepage(blog.show_on_homepage || false);
                       setOpen(true);
                     }}
                   >
