@@ -59,7 +59,7 @@ const Blogs = () => {
                     {blog.excerpt || blog.content.substring(0, 150) + "..."}
                   </p>
                   <Button asChild variant="outline" className="w-full">
-                    <Link to={`/blogs/${blog.slug}`}>Read More</Link>
+                    <Link to={`/blogs/${encodeURIComponent(blog.slug)}`}>Read More</Link>
                   </Button>
                 </CardContent>
               </Card>

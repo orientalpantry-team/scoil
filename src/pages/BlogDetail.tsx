@@ -8,13 +8,15 @@ import { Calendar, ArrowLeft } from "lucide-react";
 const BlogDetail = () => {
   const { slug } = useParams<{ slug: string }>();
 
+  const decodedSlug = slug ? decodeURIComponent(slug) : '';
+
   const { data: blog, isLoading } = useQuery({
-    queryKey: ["blog", slug],
+    queryKey: ["blog", decodedSlug],
     queryFn: async () => {
       const { data } = await supabase
         .from("blogs")
         .select("*")
-        .eq("slug", slug)
+        .eq("slug", decodedSlug)
         .single();
       return data;
     },
