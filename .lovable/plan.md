@@ -1,156 +1,122 @@
 
 
-# Enrollment Section & Admin Management Implementation Plan
+# Enrollment Navigation and Background Customization
 
 ## Overview
-This plan adds an **Enrollment Section** to the homepage where visitors can download enrollment forms, along with an **Admin Management Page** for uploading and managing enrollment documents.
+This plan adds two features:
+1. **Top Menu Navigation** - Add "Enrollment" link to the main navbar for quick access to the enrollment section on the homepage
+2. **Background Customization** - Add controls in the Enrollment admin page to change the section's background image and color
 
 ---
 
 ## What Will Be Built
 
-### Frontend (Public)
-- New "Enrollment" section on the homepage with:
-  - Section title and description
-  - List of downloadable enrollment forms/documents
-  - Download buttons for each document
+### Top Navigation Enhancement
+- Add "Enrollment" to the main navigation bar
+- Clicking it scrolls to the enrollment section on the homepage (using anchor link)
+- Works on both desktop and mobile views
 
-### Backend (Admin)
-- New "Enrollment" admin page for managing enrollment documents
-- Ability to upload PDF/Word documents or provide external URLs
-- Edit and delete functionality for enrollment documents
+### Admin Background Controls
+- New "Section Settings" area in the Enrollment Management page
+- Background image upload functionality (using existing gallery/uploads bucket)
+- Background color picker
+- Overlay opacity control for images
+- Settings saved to the `sections` table with key `home.enrollment`
 
 ---
 
 ## Implementation Steps
 
-### Step 1: Create Database Table
-Create a new `enrollment_forms` table to store enrollment documents:
-- `id` - unique identifier
-- `title` - document name (e.g., "Enrollment Application Form")
-- `description` - optional description
-- `file_url` - link to the downloadable file
-- `display_order` - for ordering documents
-- `created_at` - timestamp
+### Step 1: Add Enrollment to Navigation Bar
+Modify `src/components/layout/Navbar.tsx`:
+- Add new nav link object for "Enrollment" pointing to `/#enrollment`
+- The link navigates to home page and scrolls to the enrollment section
 
-### Step 2: Set Up Storage Bucket
-Create an `enrollment` storage bucket for uploaded files with public access.
+### Step 2: Add Section ID to Homepage
+Modify `src/pages/Home.tsx`:
+- Add `id="enrollment"` attribute to the enrollment section
+- This enables anchor linking from the navbar
 
-### Step 3: Configure Row-Level Security
-- Public users can view enrollment forms (SELECT)
-- Only admins can add, edit, or delete forms (INSERT, UPDATE, DELETE)
+### Step 3: Create Database Entry for Enrollment Section Styles
+Create a new entry in the `sections` table:
+- Key: `home.enrollment`
+- Content: JSON object with `backgroundImage`, `backgroundColor`, `overlayOpacity`
 
-### Step 4: Create Admin Page
-Create `src/pages/admin/EnrollmentManagement.tsx`:
-- List all enrollment documents
-- Dialog form for adding/editing documents
-- File upload or URL input options (like Policies page)
-- Delete functionality with confirmation
-- Display order management
+### Step 4: Update Enrollment Admin Page
+Modify `src/pages/admin/EnrollmentManagement.tsx`:
+- Add a new "Section Settings" card at the top of the page
+- Include:
+  - Background image selector (reusing existing ImageSelector component)
+  - Color picker for background color
+  - Overlay opacity slider (when image is set)
+- Save changes to the `sections` table
 
-### Step 5: Update Admin Navigation
-Add the Enrollment menu item to `AdminLayout.tsx` with appropriate icon and role permissions.
-
-### Step 6: Add Route
-Register the new admin route in `App.tsx`.
-
-### Step 7: Add Enrollment Section to Homepage
-Add a new section to `Home.tsx`:
-- Fetch enrollment forms from database
-- Display with download buttons
-- Styled consistently with other sections
+### Step 5: Apply Background Styles to Homepage
+Modify `src/pages/Home.tsx`:
+- Fetch enrollment section settings from `sections` table
+- Apply background image and/or background color to the enrollment section
+- Handle overlay opacity for image backgrounds
 
 ---
 
 ## Technical Details
 
-### Database Migration SQL
+### Database Changes
+No new tables required. We'll use the existing `sections` table with a new key:
+
 ```text
--- Create enrollment_forms table
-CREATE TABLE public.enrollment_forms (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  title TEXT NOT NULL,
-  description TEXT,
-  file_url TEXT NOT NULL,
-  display_order INTEGER DEFAULT 0,
-  created_at TIMESTAMPTZ DEFAULT now()
-);
-
--- Enable RLS
-ALTER TABLE public.enrollment_forms ENABLE ROW LEVEL SECURITY;
-
--- RLS Policies
-CREATE POLICY "Public can view enrollment forms"
-  ON public.enrollment_forms FOR SELECT
-  USING (true);
-
-CREATE POLICY "Admins can insert enrollment forms"
-  ON public.enrollment_forms FOR INSERT
-  WITH CHECK (has_role(auth.uid(), 'admin'));
-
-CREATE POLICY "Admins can update enrollment forms"
-  ON public.enrollment_forms FOR UPDATE
-  USING (has_role(auth.uid(), 'admin'));
-
-CREATE POLICY "Admins can delete enrollment forms"
-  ON public.enrollment_forms FOR DELETE
-  USING (has_role(auth.uid(), 'admin'));
-
--- Create storage bucket
-INSERT INTO storage.buckets (id, name, public)
-VALUES ('enrollment', 'enrollment', true);
-
--- Storage policies
-CREATE POLICY "Public can view enrollment files"
-  ON storage.objects FOR SELECT
-  USING (bucket_id = 'enrollment');
-
-CREATE POLICY "Admins can upload enrollment files"
-  ON storage.objects FOR INSERT
-  WITH CHECK (bucket_id = 'enrollment' AND has_role(auth.uid(), 'admin'));
-
-CREATE POLICY "Admins can update enrollment files"
-  ON storage.objects FOR UPDATE
-  USING (bucket_id = 'enrollment' AND has_role(auth.uid(), 'admin'));
-
-CREATE POLICY "Admins can delete enrollment files"
-  ON storage.objects FOR DELETE
-  USING (bucket_id = 'enrollment' AND has_role(auth.uid(), 'admin'));
+Key: home.enrollment
+Content structure:
+{
+  "backgroundImage": "https://...",
+  "backgroundColor": "215 70% 35%",
+  "overlayOpacity": 0.5
+}
 ```
 
-### Files to Create/Modify
+### Files to Modify
 
-| File | Action |
-|------|--------|
-| `src/pages/admin/EnrollmentManagement.tsx` | Create new admin page |
-| `src/components/admin/AdminLayout.tsx` | Add navigation item |
-| `src/App.tsx` | Add route |
-| `src/pages/Home.tsx` | Add enrollment section |
+| File | Changes |
+|------|---------|
+| `src/components/layout/Navbar.tsx` | Add "Enrollment" nav link with anchor to `/#enrollment` |
+| `src/pages/Home.tsx` | Add section ID, fetch enrollment styles, apply background |
+| `src/pages/admin/EnrollmentManagement.tsx` | Add Section Settings card with background controls |
 
-### Admin Navigation Addition
-Add to `allNavItems` array:
+### Component Reuse
+- Use existing `ImageSelector` component for background image selection
+- Use existing `ColorPicker` component for background color
+- Use Shadcn `Slider` component for overlay opacity
+
+### Navbar Link Structure
 ```text
-{ path: "/admin/enrollment", label: "Enrollment", icon: ClipboardList, roles: ["editor", "admin"] }
+{ to: "/#enrollment", label: "Enrollment" }
 ```
 
-### Homepage Section Design
-- Placed after Features section (visible early on page)
-- Card-based layout for each downloadable form
-- Download icon button for each document
-- Responsive grid: 1 column mobile, 2-3 columns desktop
+The link will:
+1. Navigate to the home page
+2. Scroll to the element with `id="enrollment"`
+
+### Background Style Logic
+The enrollment section will support:
+- **Background color only** - Solid color background
+- **Background image only** - Image with configurable overlay opacity
+- **Both** - Image overlaid on the color
 
 ---
 
 ## User Experience
 
 **For Visitors:**
-1. Scroll to "Enrollment" section on homepage
-2. See list of available enrollment forms
-3. Click download button to get the PDF/document
+1. Click "Enrollment" in the top navigation
+2. Instantly scroll to the enrollment section on the homepage
+3. See the section with customized background styling
 
 **For Admins:**
 1. Navigate to Admin Panel > Enrollment
-2. Click "Add Document" to upload new forms
-3. Either upload a file or paste an external URL
-4. Reorder, edit, or delete documents as needed
+2. See "Section Settings" card at the top
+3. Upload a background image or select from gallery
+4. Choose a background color using the color picker
+5. Adjust overlay opacity if using an image
+6. Click "Save Settings" to apply changes
+7. Changes appear immediately on the public homepage
 
