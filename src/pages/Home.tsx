@@ -1,10 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { BookOpen, Users, Award, Heart, Star } from "lucide-react";
+import { BookOpen, Users, Award, Heart, Star, Calendar } from "lucide-react";
+import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import {
   Carousel,
@@ -82,6 +83,18 @@ const Home = () => {
     },
   });
 
+  const { data: featuredBlogs } = useQuery({
+    queryKey: ["featuredBlogs"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("blogs")
+        .select("*")
+        .eq("show_on_homepage", true)
+        .order("published_at", { ascending: false })
+        .limit(6);
+      return data || [];
+    },
+  });
 
   const handleContactSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -286,6 +299,47 @@ const Home = () => {
           </div>
         </div>
       </section>
+
+      {/* Featured Blogs Section */}
+      {featuredBlogs && featuredBlogs.length > 0 && (
+        <section className="py-16 bg-muted/30">
+          <div className="container mx-auto px-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
+              Latest News
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {featuredBlogs.map((blog: any) => (
+                <Card key={blog.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                  {blog.cover_image && (
+                    <div className="aspect-video relative overflow-hidden">
+                      <img
+                        src={blog.cover_image}
+                        alt={blog.title}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
+                  <CardHeader>
+                    <CardTitle className="line-clamp-2">{blog.title}</CardTitle>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Calendar className="h-4 w-4" />
+                      {new Date(blog.published_at).toLocaleDateString()}
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-muted-foreground line-clamp-3 mb-4">
+                      {blog.excerpt || blog.content.substring(0, 150) + "..."}
+                    </p>
+                    <Button asChild variant="outline" className="w-full">
+                      <Link to={`/blogs/${encodeURIComponent(blog.slug)}`}>Read More</Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Contact Section */}
       <section 

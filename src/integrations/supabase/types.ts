@@ -22,6 +22,7 @@ export type Database = {
           excerpt: string | null
           id: string
           published_at: string | null
+          show_on_homepage: boolean
           slug: string
           title: string
         }
@@ -32,6 +33,7 @@ export type Database = {
           excerpt?: string | null
           id?: string
           published_at?: string | null
+          show_on_homepage?: boolean
           slug: string
           title: string
         }
@@ -42,6 +44,7 @@ export type Database = {
           excerpt?: string | null
           id?: string
           published_at?: string | null
+          show_on_homepage?: boolean
           slug?: string
           title?: string
         }
