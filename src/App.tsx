@@ -28,6 +28,7 @@ import TestimonialsManagement from "./pages/admin/TestimonialsManagement";
 import ContactMessages from "./pages/admin/ContactMessages";
 import UserManagement from "./pages/admin/UserManagement";
 import ThemeManagement from "./pages/admin/ThemeManagement";
+import EnrollmentManagement from "./pages/admin/EnrollmentManagement";
 
 const queryClient = new QueryClient();
 
@@ -95,6 +96,7 @@ const App = () => (
                     <Route path="/events" element={<EventsManagement />} />
                     <Route path="/gallery" element={<GalleryManagement />} />
                     <Route path="/policies" element={<PoliciesManagement />} />
+                    <Route path="/enrollment" element={<EnrollmentManagement />} />
                     <Route path="/testimonials" element={<TestimonialsManagement />} />
                     <Route path="/contact" element={<ContactMessages />} />
                     <Route path="/users" element={<UserManagement />} />

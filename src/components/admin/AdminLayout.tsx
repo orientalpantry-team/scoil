@@ -17,6 +17,7 @@ import {
   Mail,
   Users,
   User,
+  ClipboardList,
 } from "lucide-react";
 
 interface AdminLayoutProps {
@@ -72,6 +73,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
     { path: "/admin/events", label: "Events", icon: Calendar, roles: ["editor", "admin"] },
     { path: "/admin/gallery", label: "Gallery", icon: Image, roles: ["editor", "admin"] },
     { path: "/admin/policies", label: "Policies", icon: FileCheck, roles: ["editor", "admin"] },
+    { path: "/admin/enrollment", label: "Enrollment", icon: ClipboardList, roles: ["editor", "admin"] },
     { path: "/admin/testimonials", label: "Testimonials", icon: MessageSquare, roles: ["editor", "admin"] },
     { path: "/admin/contact", label: "Contact Messages", icon: Mail, roles: ["editor", "admin"] },
     { path: "/admin/theme", label: "Theme", icon: Settings, roles: ["admin"] },

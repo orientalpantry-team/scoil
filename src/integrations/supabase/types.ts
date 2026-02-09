@@ -74,6 +74,33 @@ export type Database = {
         }
         Relationships: []
       }
+      enrollment_forms: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          file_url: string
+          id: string
+          title: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          file_url: string
+          id?: string
+          title: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          file_url?: string
+          id?: string
+          title?: string
+        }
+        Relationships: []
+      }
       events: {
         Row: {
           created_at: string | null
