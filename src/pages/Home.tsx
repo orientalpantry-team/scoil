@@ -93,6 +93,18 @@ const Home = () => {
     },
   });
 
+  const { data: enrollmentStyles } = useQuery({
+    queryKey: ["section", "home.enrollment"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("sections")
+        .select("content")
+        .eq("key", "home.enrollment")
+        .single();
+      return data?.content as { backgroundImage?: string; backgroundColor?: string; overlayOpacity?: number } | null;
+    },
+  });
+
   const handleContactSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
@@ -267,7 +279,18 @@ const Home = () => {
 
       {/* Enrollment Section */}
       {enrollmentForms && enrollmentForms.length > 0 && (
-        <section className="py-16 bg-muted/30">
+        <section 
+          id="enrollment"
+          className="py-16 bg-cover bg-center"
+          style={{
+            backgroundColor: enrollmentStyles?.backgroundColor 
+              ? `hsl(${enrollmentStyles.backgroundColor})` 
+              : undefined,
+            backgroundImage: enrollmentStyles?.backgroundImage 
+              ? `linear-gradient(hsla(${enrollmentStyles.backgroundColor || '0 0% 0%'}, ${enrollmentStyles.overlayOpacity ?? 0.5}), hsla(${enrollmentStyles.backgroundColor || '0 0% 0%'}, ${enrollmentStyles.overlayOpacity ?? 0.5})), url(${enrollmentStyles.backgroundImage})`
+              : undefined,
+          }}
+        >
           <div className="container mx-auto px-4">
             <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">
               Enrollment
