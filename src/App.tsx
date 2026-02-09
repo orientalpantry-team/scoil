@@ -15,6 +15,7 @@ import BlogDetail from "./pages/BlogDetail";
 import Policies from "./pages/Policies";
 import Calendar from "./pages/Calendar";
 import NotFound from "./pages/NotFound";
+import Enrollment from "./pages/Enrollment";
 import Auth from "./pages/Auth";
 import ProtectedRoute from "./components/admin/ProtectedRoute";
 import AdminLayout from "./components/admin/AdminLayout";
@@ -73,6 +74,7 @@ const App = () => (
                     <Route path="/blogs/:slug" element={<BlogDetail />} />
                     <Route path="/policies" element={<Policies />} />
                     <Route path="/calendar" element={<Calendar />} />
+                    <Route path="/enrollment" element={<Enrollment />} />
                   </Routes>
                 </main>
                 <Footer />

@@ -27,7 +27,7 @@ const Navbar = () => {
 
   const navLinks = [
     { to: "/", label: "Home" },
-    { to: "/#enrollment", label: "Enrollment" },
+    { to: "/enrollment", label: "Enrollment" },
     { to: "/gallery", label: "Gallery" },
     { to: "/blogs", label: "Blogs" },
     { to: "/calendar", label: "Calendar" },
