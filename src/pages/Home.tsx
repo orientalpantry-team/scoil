@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { BookOpen, Users, Award, Heart, Star } from "lucide-react";
+import { BookOpen, Users, Award, Heart, Star, Download, FileText } from "lucide-react";
 import { toast } from "sonner";
 import {
   Carousel,
@@ -79,6 +79,17 @@ const Home = () => {
         .eq("key", "home.contact")
         .single();
       return data?.content as any;
+    },
+  });
+
+  const { data: enrollmentForms } = useQuery({
+    queryKey: ["enrollment_forms"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("enrollment_forms")
+        .select("*")
+        .order("display_order", { ascending: true });
+      return data || [];
     },
   });
 
@@ -254,9 +265,48 @@ const Home = () => {
         </div>
       </section>
 
+      {/* Enrollment Section */}
+      {enrollmentForms && enrollmentForms.length > 0 && (
+        <section className="py-16 bg-muted/30">
+          <div className="container mx-auto px-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">
+              Enrollment
+            </h2>
+            <p className="text-center text-muted-foreground mb-12 max-w-2xl mx-auto">
+              Download the enrollment forms below to begin the registration process for your child.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-4xl mx-auto">
+              {enrollmentForms.map((form: any) => (
+                <Card key={form.id} className="hover:shadow-lg transition-shadow">
+                  <CardContent className="pt-6">
+                    <div className="flex items-start gap-4">
+                      <div className="p-3 bg-primary/10 rounded-lg">
+                        <FileText className="h-6 w-6 text-primary" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-lg mb-1">{form.title}</h3>
+                        {form.description && (
+                          <p className="text-sm text-muted-foreground mb-3">{form.description}</p>
+                        )}
+                        <Button asChild variant="outline" size="sm">
+                          <a href={form.file_url} target="_blank" rel="noopener noreferrer">
+                            <Download className="h-4 w-4 mr-2" />
+                            Download
+                          </a>
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* About Section */}
       <section 
-        className="py-16 bg-muted/30 bg-cover bg-center"
+        className="py-16 bg-cover bg-center"
         style={{
           backgroundImage: theme?.section_styles?.about?.backgroundImage 
             ? `linear-gradient(rgba(255, 255, 255, ${1 - (theme.section_styles.about.overlayOpacity || 0)}), rgba(255, 255, 255, ${1 - (theme.section_styles.about.overlayOpacity || 0)})), url(${theme.section_styles.about.backgroundImage})`
