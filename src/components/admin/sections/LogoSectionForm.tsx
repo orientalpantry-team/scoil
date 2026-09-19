@@ -9,6 +9,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ImageSelector } from "../ImageSelector";
+import { toWebImage } from "@/lib/imageUpload";
 
 const logoSchema = z.object({
   image: z.string().url("Must be a valid URL"),
@@ -46,12 +47,13 @@ export const LogoSectionForm = ({ content, onSave, isSaving }: LogoSectionFormPr
 
     setIsUploading(true);
     try {
-      const fileExt = file.name.split('.').pop();
+      const imageFile = await toWebImage(file);
+      const fileExt = imageFile.name.split('.').pop();
       const filePath = `${Math.random()}.${fileExt}`;
 
       const { error: uploadError, data } = await supabase.storage
         .from('gallery')
-        .upload(filePath, file);
+        .upload(filePath, imageFile);
 
       if (uploadError) throw uploadError;
 

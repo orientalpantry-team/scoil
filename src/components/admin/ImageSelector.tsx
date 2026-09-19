@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Loader2, Upload, ImagePlus } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { isImageFile, toWebImage } from "@/lib/imageUpload";
 
 interface GalleryImage {
   id: string;
@@ -47,7 +48,7 @@ export const ImageSelector = ({ onSelect, onClose }: ImageSelectorProps) => {
   };
 
   const handleUpload = async (file: File) => {
-    if (!file.type.startsWith('image/')) {
+    if (!isImageFile(file)) {
       toast({
         title: "Error",
         description: "Please select an image file",
@@ -58,12 +59,13 @@ export const ImageSelector = ({ onSelect, onClose }: ImageSelectorProps) => {
 
     setUploading(true);
     try {
-      const fileExt = file.name.split(".").pop();
+      const imageFile = await toWebImage(file);
+      const fileExt = imageFile.name.split(".").pop();
       const filePath = `${crypto.randomUUID()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from("gallery")
-        .upload(filePath, file);
+        .upload(filePath, imageFile);
 
       if (uploadError) throw uploadError;
 

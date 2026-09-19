@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ImageSelector } from "../ImageSelector";
 import { useState } from "react";
 import { toast } from "sonner";
+import { toWebImage } from "@/lib/imageUpload";
 
 const featureSchema = z.object({
   icon: z.string().min(1, "Icon is required"),
@@ -85,12 +86,13 @@ export const FeaturesSectionForm = ({ content, onSave, isSaving }: FeaturesSecti
 
     setUploadingFor(index);
     try {
-      const fileExt = file.name.split(".").pop();
+      const imageFile = await toWebImage(file);
+      const fileExt = imageFile.name.split(".").pop();
       const filePath = `${crypto.randomUUID()}.${fileExt}`;
 
       const { error: uploadError, data } = await supabase.storage
         .from("gallery")
-        .upload(filePath, file);
+        .upload(filePath, imageFile);
 
       if (uploadError) throw uploadError;
 

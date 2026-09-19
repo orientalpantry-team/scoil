@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Plus, Trash2, Loader2, FolderOpen, Pencil } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { toWebImage } from "@/lib/imageUpload";
 
 interface GalleryItem {
   id: string;
@@ -134,12 +135,13 @@ const GalleryManagement = () => {
 
       const uploadPromises = files.map(async (file, index) => {
         // Upload to storage
-        const fileExt = file.name.split(".").pop();
+        const imageFile = await toWebImage(file);
+        const fileExt = imageFile.name.split(".").pop();
         const fileName = `${folder}/${crypto.randomUUID()}.${fileExt}`;
         
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from("gallery")
-          .upload(fileName, file);
+          .upload(fileName, imageFile);
 
         if (uploadError) throw uploadError;
 

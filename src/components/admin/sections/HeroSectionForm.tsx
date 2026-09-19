@@ -9,6 +9,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ImageSelector } from "../ImageSelector";
+import { toWebImage } from "@/lib/imageUpload";
 
 const slideSchema = z.object({
   title: z.string().min(1, "Title is required").max(100, "Title must be less than 100 characters"),
@@ -49,12 +50,13 @@ export const HeroSectionForm = ({ content, onSave, isSaving }: HeroSectionFormPr
   const handleImageUpload = async (slideIndex: number, file: File) => {
     setUploading(slideIndex);
     try {
-      const fileExt = file.name.split(".").pop();
+      const imageFile = await toWebImage(file);
+      const fileExt = imageFile.name.split(".").pop();
       const filePath = `${crypto.randomUUID()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from("uploads")
-        .upload(filePath, file);
+        .upload(filePath, imageFile);
 
       if (uploadError) throw uploadError;
 

@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Pencil, Trash2, Loader2, Upload, Image as ImageIcon } from "lucide-react";
 import { ImageSelector } from "@/components/admin/ImageSelector";
+import { toWebImage } from "@/lib/imageUpload";
 
 interface Event {
   id: string;
@@ -89,12 +90,13 @@ const EventsManagement = () => {
   const handleImageUpload = async (file: File) => {
     setUploading(true);
     try {
-      const fileExt = file.name.split(".").pop();
+      const imageFile = await toWebImage(file);
+      const fileExt = imageFile.name.split(".").pop();
       const filePath = `${crypto.randomUUID()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from("uploads")
-        .upload(filePath, file);
+        .upload(filePath, imageFile);
 
       if (uploadError) throw uploadError;
 
